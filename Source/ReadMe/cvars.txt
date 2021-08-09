@@ -1,0 +1,144 @@
+;
+; (Press Ctrl + Shift + Tab (keybinding not customizable yet) to open command console)
+;
+;	The command console will pause any Steam Overlay aware game until you close it by pressing
+;	  the command console binding a second time.
+;
+;	You can cycle through previous (successful) commands / variables by pressing Up/Down
+;
+; 	Many of these variables have a corresponding entry in various config files, changing
+;	  them through the command console will permanently change them in the config file.
+;
+
+;==========
+; COMMANDS
+;==========
+
+ mem			<DataType> 				<MemAddr> 				<Value>
+---------------------------------------------------------------------------------------------------------------------------
+			'b' ( Byte   -  8-bit Integer )		Relative to Game's Base Address 	0-ff
+			's' ( Short  - 16-bit Integer )							0-ffff
+			'i' ( Int    - 32-bit Integer )							0-ffffffff
+			'l' ( Long   - 64-bit Integer )							0-ffffffffffffffff
+			'd' ( Double - 64-bit Float   )							-oo,oo
+			'f' ( Float  - 32-bit Float   )							-oo,oo
+			't' ( Text   -  UTF-8 Text    )							Text...
+
+	Examples:	mem b 0 ff	  ; (Sets the first byte of memory to 0xff (255))
+			mem t 444 Foobar  ; (Writes "Foobar" to (BaseAddr + 0x444))
+			mem l 0		  ; (Reports the first 64-bits of memory as an Integer)
+
+	Memory addresses and integer values are only accepted in hexadecimal form, this should not be a major
+	  problem since CheatEngine and the likes will usually give you addresses in base-16; likewise, the
+	    majority of memory addresses reported by CheatEngine are already relative to the game's base addr.
+
+	BE CAREFUL WITH THIS FEATURE, ADDRESSES ARE NOT VALIDATED AND YOU CAN EASILY CAUSE AN ACCESS VIOLATION!
+	
+		*** SAVE YOUR GAME FIRST :) ***
+
+
+;===========
+; VARIABLES
+;===========
+
+;
+; Steam Features 	(Global)
+;
+Steam.ShowPopup		true, false			Draw CEGUI Achievement Popup?
+Steam.PopupDuration	500 - 30000			Time (in milliseconds) to Display Achievement Popup
+Steam.PopupInset	0.0 - 1.0			Minimum Percentage (Normalized) of Screen to Offset
+							  the Achievement Popup from Corner
+Steam.PopupAnimate	true, false			Animate the CEGUI Achievement Popup
+Steam.PopupOrigin	TopLeft,    TopRight,
+			BottomLeft, BottomRight		Achivement Popup Position
+
+Steam.TakeScreenshot	true, false			Take a Screenshot on Achievement Unlock
+Steam.PlaySound		true, false			Play a sound on Achievement Unlock
+
+Steam.NotifyCorner	TopLeft,    TopRight,
+			BottomLeft, BottomRight,
+			DontCare			Steam Overlay Notification Position
+
+
+;
+; Cursor Management	(Per-Game)
+;
+Cursor.Manage		true, false			Whether to hide/show Mouse Cursor
+Cursor.Timeout		0 - 60000			Time (in milliseconds) Before an Unmoved Cursor is Hidden
+Cursor.KeysActivate	true, false			Pressing a (letter) Key Unhides Cursor
+
+
+;
+; Window Management	(Per-Game)
+;
+;   Most of these now apply in real-time, but some games behave very strangely if their resolution is changed
+;     suddenly, so be mindful of changing OverrideX/Y. Also note that many of these settings only apply if the
+;       game is running in windowed mode and if Borderless is set to true.
+;
+Window.BackgroundRender	true, false			Trick Game into Thinking it is in Foreground
+								(Some games stop rendering / playing sound in background)
+Window.BackgroundMute   true, false			Automatically Mute / Unmute the Game when it is Activated
+Window.Borderless	true, false			Remove Window Decorations
+Window.Center		true, false			Center the Window
+Window.ConfineCursor	true, false			Trap the Mouse Cursor Inside the Window When it has Focus
+
+Window.Fullscreen	true, false			Stretch a Borderless Window to Fill Fullscreen
+								(No matter what in-game resolution you select)
+
+							  << Most games will render at a different resolution and Windows
+ 							       will upscale or downscale to match your desktop res; this
+								 scaling behavior is unique to Direct3D games. >>
+
+Window.OverrideX	320 - 16384			Render Width  (Override game's preference iff != 0)
+Window.OverrideY	240 - 16384			Render Height (Override game's preference iff != 0)
+Window.OverrideRes	<X>x<Y>				Set X and Y in a single command
+Window.OverrideMouse	true, false			Attempt to Correct Mouse Coordinates to Compensate for the
+							  Resolution the Game BELIEVES it is Running at...
+
+; Using the absolute (XOffset / YOffset) variables clears their Scaled ones...
+;
+;  (The Scaled Offsets are useful if your desktop resolution is not constant)
+;
+Window.XOffset		-oo - oo   			Distance from Left/Right Corner (or Center) of Screen to Offset
+								(Negative Values = Distance from Right Side)
+Window.YOffset		-oo - oo			Distance from Top/Bottom Corner (or Center) of Screen to Offset
+								(Negative Values = Distance from Bottom)
+Window.ScaledXOffset	-1.0 - 1.0			Percentage of Screen from Left (Positive) or Right  (Negative)
+Window.ScaledYOffset	-1.0 - 1.0			Percentage of Screen from Top  (Positive) or Bottom (Negative)
+
+;
+; D3D11 Texture Management (DOCUMENTATION PENDING)
+;
+TexCache.Enable
+TexCache.MaxEntries
+TexCache.MinEntries
+TexCache.MaxSize
+TexCache.MinSize
+TexCache.MinEvict
+TexCache.MaxEvict
+TexCache.IgnoreNonMipped
+
+
+;
+; Framerate Limiter	(Per-Game)
+;
+MaxDeltaTime		0 - 16				Horribly Misnamed Variable:
+								( Minimum amount of time before busy-wait becomes Sleep,
+								    useful for stutter reduction IF you have a lot of
+								      CPU cores )
+
+LimiterTolerance	0.0 - 1.0			How Strictly to Follow TargetFPS (for testing only)
+TargetFPS		0.0 - oo			0.0 = Unlimited, Everything Else = Framerate Limit
+
+
+;
+; OSD			(Global)
+;
+OSD.Red			0-255				Red Intensity of OSD Text
+OSD.Green		0-255				Green Intensity of OSD Text
+OSD.Blue		0-255				Blue Intensity of OSD Text
+
+OSD.Scale		0.25 - 8.0			OSD Scaling Factor
+
+OSD.PosX		-4096 - 4096			X Position of the Text Overlay (Negative = Relative to Right)
+OSD.PosY		-4096 - 4096			Y Position of the Text Overlay (Negative = Relative to Bottom)

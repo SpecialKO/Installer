@@ -1,0 +1,155 @@
+To install Special K:
+=====================
+
+ Begin by creating the following directory:
+
+    [   Documents\My Mods\SpecialK\   ]
+
+ >> This new directory is Grand Central Station for Special K! <<
+
+   @ You are encouraged to take a minute or two to review
+     Special K's directory structure prior to installation.
+
+
+Overview of Data Stored in "Documents\My Mods\SpecialK":
+--------------------------------------------------------
+
+ * Per-game Configuration Settings
+
+   + Steam Games:     ( Profiles\<Localized Application Name>\*.ini )
+   + Non-Steam Games: ( Profiles\<NameOfGame.exe>\*.ini             )
+
+ * Shared preferences
+
+   + Steam Enhancements ( Global\steam.ini  )
+   + Keyboard Macros    ( Global\macros.ini )
+   + OSD / Widgets      ( Global\osd.ini    )
+   + Injection Control
+
+     # White/Blacklist  ( Global\{white|black}list.ini )
+      \
+       ) Injection white/blacklists are a line-delimited list of Reg.Exp. patterns
+       ) that match executable filenames or partial paths, see SKIF for more details.
+
+ * Plug-Ins
+   --------
+  + Official    (PlugIns\ThirdParty)  [ Unmodified Off-the-Shelf Products]
+  + Unofficial  (PlugIns\Unofficial)  [ Have Exclusive Special K Features]
+ 
+ * CEGUI
+
+   > Not included in any downloaded archive of Special K, this directory will
+     be created by Special K the first time you turn its text OSD on.
+
+ * Drivers
+
+   > Isolated copies of system DLLs that are not normally thread-safe (i.e. dbghelper.dll)
+     are stored here so that games and Special K can both safely use the thread unsafe DLL.
+   > WinRing0 may also be unpacked if you turn on advanced CPU hardware monitoring.
+
+ * Version
+
+   + Information about the currently installed version, as well as backup copies of old
+     versions are stored here for any version control enabled mod / component of Special K.
+
+ * ReadMe
+
+   + Yes, you do appear to be Reading Me... thank you! :)
+
+
+
+Installation (assuming SKIF.exe was included and you were not a Steam beta tester):
+============
+  > If you have a license for the Steam version, skip past this section. <
+
+
+ Extract the contents of this archive to "Documents\My Mods\SpecialK\", replacing any DLLs
+   left-over from a previous installation. 
+
+
+ A bare minimum install will include the following files:
+
+  * SKIF.exe  (Code Injection Utilty)
+    ========
+   * SpecialK32.dll  (32-bit version of Special K)
+   * SpecialK64.dll  (64-bit version of Special K)
+
+   * A directory called "Servlets"  (stores runlevel and scripts to start SK at LogOn)
+
+
+ Additional files you may see:
+
+  * SpecialK{32|64}.pdb  (Debug Symbols to improve the level of detail in crash logs)
+
+    +  You may delete the Debug Symbols to save disk space, the software will
+       work the same with or without.
+
+
+ Create a shortcut to SKIF.exe and you are done installing Special K :)
+
+
+XXX =================================================
+XXX Installation for Steam Licensed Special K Testers
+XXX =================================================
+
+ + Special K is no longer distributed through Steam, however, your beta license allows you
+     to install and run SK from ( SteamApps\common\SpecialK\ ) and doing so will accumulate
+       played hours in the Steam version.
+
+  # No better way to show your support for Special K than to be one of the few thousand users
+      with a Steam license racking up playing time in an ultra rare application your friends
+        can never play. You will be the envy of everyone :)
+
+  > On a serious note, you have the option of installing to that directory or to the normal
+      "Documents\My Mods\SpecialK," but you should take care not to wind up with Special K
+        installed in both locations.  ( Pick one, and only one place for SK!! )
+
+
+------------------------------------------------------------------------------------------------
+To Uninstall Special K
+======================
+
+ Oh noes!
+
+   Sorry to see you go; if a technical issue prompted this, did you first swing by the
+   Special K forums (https://special-k.info) and try to get assistance with your problem?
+
+     We are happy to help if we can.
+
+ ---
+ Whatever your reason, uninstalling Special K is as simple as:
+
+  1. Stop Global Injection Service
+  2. Delete Servlets subdirectory from Install Path ( Default = Documents\My Mods\SpecialK )
+  3. Delete SKIF.exe and SpecialK{32|64}.{pdb|dll}
+
+  Many additional files will linger after doing this, they are harmless and isolated to the
+  subdirectories where SKIF.exe was located.
+
+    If you really want to do a full uninstall, which will wipe any Steam HDR screenshots, and
+    customized game configuration, you may nuke the entire "Documents\My Mods\SpecialK" directory.
+
+      >> Note that if Global Injection was active prior to performing the steps listed above,
+         some or all of the directory structure may be locked by a program that still has
+         Special K's DLL loaded.
+
+         Logging out and back in should release all directory locks and allow you to finish a
+         complete wipe of Special K.
+
+  Registry Keys:   We've got em; sounds like you don't want em...
+  *************    ----------------------------------------------
+
+   Special K (SKIF mostly) stores a few registry keys in the HKCU System Registry Hive:
+
+     "HKEY_CURRENT_USER\SOFTWARE\Kaldaien\Special K\..."
+
+   Delete those too if you are truly determined to eradicate all traces of Special K; yeesh! :)
+
+
+
+  At this point Special K is completely gone.
+
+    Pirates may try to convince you there are magic files leftover that nobody but them know
+      anything about, doing all manner of ridiculous things. At this point, that is a running
+        joke. You should not take seriously stories told by crazy homeless people panhandling
+          for booze money; this is the digital equivalent, sad but you have to ignore it.
