@@ -43,36 +43,54 @@ if ($Env:PROCESSOR_ARCHITEW6432 -eq "AMD64")
 	
 	https://docs.microsoft.com/en-us/windows/win32/secauthz/well-known-sids
 #>
-$CurrentUser 			= [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value 		# This is unique per user and machine.
+$CurrentUser 			= [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value 		# This is unique per user and machine
 $NTAuthorityInteractive = "S-1-5-4" 																# NT AUTHORITY\INTERACTIVE
-$PerformanceLogUsers 	= "S-1-5-32-559" 															# Performance Log Users
+$PerformanceLogUsers 	= "S-1-5-32-559" 															#     BUILT-IN\Performance Log Users
 
-# Assume there is nothing to do.
+# Assume there is nothing to do
 $AllDone = $True
 
 # Use -ErrorAction Stop to throw an exception when a missing user is found.
 Try
 {
-	# Get-LocalGroupMember -SID $PerformanceLogUsers -Member $CurrentUser				-ErrorAction Stop
-	Get-LocalGroupMember -SID $PerformanceLogUsers -Member $NTAuthorityInteractive 	-ErrorAction Stop
+	if ([Environment]::OSVersion.Version -like "1*")
+	{
+		# On Windows 10, use the native PowerShell cmdlet Add-LocalGroupMember since it supports SIDs
+		Get-LocalGroupMember -SID $PerformanceLogUsers -Member $NTAuthorityInteractive -ErrorAction Stop
+	}
+	else
+	{
+		# On Windows 8.1 assume there's always something to do
+		$AllDone = $False
+	}
 }
 Catch
 {
-	# Something needs to be done.
+	# Something needs to be done
 	$AllDone = $False
 }
 
-# If there is something to do.
+# If there is something to do
 if ($AllDone -eq $False)
 {
-	# Relaunch PowerShell as an elevated process with the permissions required to add the users to the group.
+	# Relaunch PowerShell as an elevated process with the permissions required to add the users to the group
 	if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator'))
 	{
 		Start-Process powershell.exe "-NonInteractive -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File",('"{0}"' -f $MyInvocation.MyCommand.Path) -Verb RunAs
 		Exit $LastExitCode
 	}
-
-	# Add the users to the group.
-	# Add-LocalGroupMember -SID $PerformanceLogUsers -Member $CurrentUser 			-ErrorAction SilentlyContinue
-	Add-LocalGroupMember -SID $PerformanceLogUsers -Member $NTAuthorityInteractive 	-ErrorAction SilentlyContinue
+	
+	# Add the user to the group
+	if ([Environment]::OSVersion.Version -like "1*")
+	{
+		# On Windows 10, use the native PowerShell cmdlet Add-LocalGroupMember since it supports SIDs
+		Add-LocalGroupMember -SID $PerformanceLogUsers -Member $NTAuthorityInteractive -ErrorAction SilentlyContinue
+	}
+	else
+	{
+		# Windows 8.1 lacks Add-LocalGroupMember, so fall back on using WMI (to retrieve the localized names of the group and user) and NET to add the user to the group
+		$Group = (Get-WmiObject -Class Win32_Group         -Filter 'LocalAccount = True AND SID = "S-1-5-32-559"').Name
+		$User  = (Get-WmiObject -Class Win32_SystemAccount -Filter 'LocalAccount = True AND SID = "S-1-5-4"'     ).Name
+		net localgroup "$Group" "$User" /add
+	}
 }
