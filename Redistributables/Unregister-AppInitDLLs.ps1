@@ -36,21 +36,21 @@ if ($Env:PROCESSOR_ARCHITEW6432 -eq "AMD64")
 }
 
 # Assume there is nothing to do.
-$32bit = $64bit = $False
+$WOW6432Node = $Native = $False
 
-# Validate 32-bit AppInit_DLLs
-If ((Get-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Windows" -Name "AppInit_DLLs").AppInit_DLLs -like "*SpecialK*")
+# Validate 32-bit WOW6432Node AppInit_DLLs on 64-bit Windows
+If ($env:PROCESSOR_ARCHITECTURE -eq "AMD64" -and (Get-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Windows" -Name "AppInit_DLLs").AppInit_DLLs -like "*SpecialK*")
 {
-	$32bit = $True
+	$WOW6432Node = $True
 }
 
-# Validate 64-bit AppInit_DLLs
+# Validate native AppInit_DLLs (64-bit on Win64, 32-bit on Win64)
 If ((Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" -Name "AppInit_DLLs").AppInit_DLLs -like "*SpecialK*")
 {
-	$32bit = $True
+	$Native = $True
 }
 
-If ($32bit -or $64bit)
+If ($WOW6432Node -or $Native)
 {
 	# Relaunch PowerShell as an elevated process with the permissions required to modify the AppInit_DLLs registry keys.
 	if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator'))
@@ -59,14 +59,14 @@ If ($32bit -or $64bit)
 		Exit $LastExitCode
 	}
 
-	# Unregister Special K from the 32-bit AppInit_DLLs
-	If ($32bit)
+	# Unregister Special K from the 32-bit WOW6432Node AppInit_DLLs AppInit_DLLs
+	If ($WOW6432Node)
 	{
 		Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Windows" -Name "AppInit_DLLs" -Value (((Get-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Windows" -Name "AppInit_DLLs").AppInit_DLLs).Split(", ", [System.StringSplitOptions]::RemoveEmptyEntries) -NotLike "*SpecialK*" -join ",");
 	}
 
-	# Unregister Special K from the 64-bit AppInit_DLLs
-	If ($64bit)
+	# Unregister Special K from the native AppInit_DLLs (64-bit on Win64, 32-bit on Win64)
+	If ($Native)
 	{
 		Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" -Name "AppInit_DLLs" -Value (((Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" -Name "AppInit_DLLs").AppInit_DLLs).Split(", ", [System.StringSplitOptions]::RemoveEmptyEntries) -NotLike "*SpecialK*" -join ",");
 	}

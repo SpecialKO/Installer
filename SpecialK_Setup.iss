@@ -19,7 +19,7 @@
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 ArchitecturesInstallIn64BitMode    = x64
-ArchitecturesAllowed               = x64
+ArchitecturesAllowed               = x86 x64
 MinVersion                         = 6.3.9600
 AppId                              = {{F4A43527-9457-424A-90A6-17CF02ACF677}
 AppName                            = {#SpecialKName}
@@ -48,6 +48,7 @@ SolidCompression                   = yes
 WizardStyle                        = modern
 WizardSmallImageFile               = {#AssetsDir}\WizardSmallImageFile.bmp
 WizardImageFile                    = {#AssetsDir}\WizardImageFile.bmp
+UninstallFilesDir                  = {app}\Servlet
 UninstallDisplayIcon               = {app}\SKIF.exe
 CloseApplications                  = yes
 DisableWelcomePage                 = no
@@ -116,16 +117,27 @@ var
   Version: String;
 begin
   Result := true;
-
-  // Is the installed version at least 14.29 ?
-  if (RegQueryStringValue(HKLM64, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'Version', Version)) then
+  
+  // Check IsWin64 before using a 64-bit-only feature to
+  // avoid an exception when running on 32-bit Windows.
+  if IsWin64 then
   begin
-    Log('Visual C++ 2019 x64 Redist version check : found ' + Version)
-    Result := (CompareStr(Version, 'v14.29.30037.00') < 0);
-  end;
+    // Is the installed version at least 14.29 ?
+    if (RegQueryStringValue(HKLM64, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'Version', Version)) then
+    begin
+      Log('Visual C++ 2019 x64 Redist version check : found ' + Version)
+      Result := (CompareStr(Version, 'v14.29.30037.00') < 0);
+    end;
 
-  if Length(Version) = 0 then
-    Log('Visual C++ 2019 x64 Redist version check : not installed');
+    if Length(Version) = 0 then
+    begin
+      Log('Visual C++ 2019 x64 Redist version check : not installed');
+    end;
+  end
+  else
+  begin
+    Result := false;
+  end;
 end;
 
 
@@ -245,7 +257,7 @@ begin
       end
       else
       begin
-        case MsgBox('OneDrive might conflict with the installation. Do you want the installer to terminate OneDrive?', mbConfirmation, MB_YESNOCANCEL) of
+        case MsgBox('OneDrive might conflict with the installation. Do you want the installer to close OneDrive? It will restart after the installation have completed.', mbConfirmation, MB_YESNOCANCEL) of
           IDYES:
             StopOneDrive();
           IDCANCEL:
@@ -286,7 +298,10 @@ begin
       AppInitDLLs64Pos := 0;
 
       RegQueryStringValue(HKLM32, 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows', 'AppInit_DLLs', AppInitDLLs32);
-      RegQueryStringValue(HKLM64, 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows', 'AppInit_DLLs', AppInitDLLs64);
+      if IsWin64 then
+      begin
+        RegQueryStringValue(HKLM64, 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows', 'AppInit_DLLs', AppInitDLLs64);
+      end;
       AppInitDLLs32Pos := Pos('SpecialK', AppInitDLLs32);
       AppInitDLLs64Pos := Pos('SpecialK', AppInitDLLs64);
       
@@ -327,7 +342,7 @@ begin
         WizardForm.PreparingLabel.Caption := 'Installing Visual C++ 2019 x64 redistributables...';
         Exec(ExpandConstant('{tmp}\VC_redist.x64.exe'), VCRedistArgs, '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
 
-        if (ResultCode <> 0) and (ResultCode <> 3010) then
+        if (ResultCode <> 0) and (ResultCode <> 1603) and (ResultCode <> 3010) then
           Result := Result + 'Visual C++ 2019 x64 redist installation failed : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode) + #13#10;
       end;
 
@@ -343,7 +358,7 @@ begin
         WizardForm.PreparingLabel.Caption := 'Installing Visual C++ 2019 x86 redistributables...';
         Exec(ExpandConstant('{tmp}\VC_redist.x86.exe'), VCRedistArgs, '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
 
-        if (ResultCode <> 0) and (ResultCode <> 3010) then
+        if (ResultCode <> 0) and (ResultCode <> 1603) and (ResultCode <> 3010) then
           Result := Result + 'Visual C++ 2019 x86 redist installation failed : ' +IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode) + #13#10;
       end;
 
@@ -519,6 +534,29 @@ begin
 end;
 
 
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+  begin
+    // Check if we're on 32-bit Windopws
+    if IsWin64 then
+    begin
+      Log('Windows 64-bit detected. Cleaning up 32-bit components.');
+      DeleteFile(ExpandConstant('{app}\SKIF32.exe'));
+    end
+    else
+    begin
+      Log('Windows 32-bit detected. Cleaning up 64-bit components.');
+      DeleteFile(ExpandConstant('{app}\SKIF.exe'));
+      DeleteFile(ExpandConstant('{app}\SpecialK64.dll'));
+      DeleteFile(ExpandConstant('{app}\SpecialK64.pdb'));
+      DeleteFile(ExpandConstant('{app}\Servlet\SKIFsvc64.exe'));
+      RenameFile(ExpandConstant('{app}\SKIF32.exe'), ExpandConstant('{app}\SKIF.exe'));
+    end;
+  end;
+end;
+
+
 function RestartOneDrive: Boolean;
 begin
   Result := OneDriveStopped;
@@ -527,11 +565,19 @@ end;
 
 [InstallDelete]
 Type: files;          Name: "{userprograms}\Startup\SKIM64.lnk"
+Type: files;          Name: "{userprograms}\Startup\SKIF.lnk"
+Type: files;          Name: "{userprograms}\Startup\SKIFsvc32.lnk"
+Type: files;          Name: "{userprograms}\Startup\SKIFsvc64.lnk"
 Type: files;          Name: "{app}\SpecialK32.pdb"
 Type: files;          Name: "{app}\SpecialK64.pdb"
-Type: files;          Name: "{app}\unins00*.exe"
-Type: files;          Name: "{app}\unins00*.dat"
+Type: files;          Name: "{app}\unins00*"
+Type: files;          Name: "{app}\Servlet\unins00*"
 
+[Registry]
+Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K 32-bit Global Injection Service Host";             Flags: uninsdeletevalue
+Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K 64-bit Global Injection Service Host";             Flags: uninsdeletevalue
+Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K";                                                  Flags: uninsdeletevalue
+Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\SKIF.exe"; ValueType: string; ValueData: "{app}\{#SpecialKExeName}"; Flags: uninsdeletekey
 
 [Files]
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
@@ -550,7 +596,7 @@ Source: "{#RedistDir}\VC_redist.x86.exe";            DestDir: {tmp};           F
 ; DirectX redistributable runtime. Extracted by MissingDXWebSetupRedist(), if needed.  
 Source: "{#RedistDir}\dxwebsetup.exe";               DestDir: {tmp};           Flags: dontcopy;
 
-; PowerShell install scripts. Extracted by installer, if needed.              
+; PowerShell install scripts. Extracted if needed.              
 Source: "{#RedistDir}\Unregister-AppInitDLLs.ps1";   DestDir: {tmp};           Flags: dontcopy;
 Source: "{#RedistDir}\Add-PerformanceLogMember.ps1"; DestDir: {tmp};           Flags: dontcopy;
 
@@ -589,10 +635,11 @@ Filename: "https://www.patreon.com/Kaldaien";       Description: "Support the pr
 Filename: "{localappdata}\Microsoft\OneDrive\OneDrive.exe";   Description: "Start OneDrive";    Parameters: "/background";    \
   Flags: nowait;    Check: RestartOneDrive;
 
-
 [UninstallDelete]
 Type: files;          Name: "{userprograms}\Startup\SKIM64.lnk"
 Type: files;          Name: "{userprograms}\Startup\SKIF.lnk"
+Type: files;          Name: "{userprograms}\Startup\SKIFsvc32.lnk"
+Type: files;          Name: "{userprograms}\Startup\SKIFsvc64.lnk"
 Type: files;          Name: "{app}\SpecialK32.old"
 Type: files;          Name: "{app}\SpecialK64.old" 
 Type: filesandordirs; Name: "{app}\Drivers\Dbghelp" 
@@ -607,6 +654,7 @@ Type: filesandordirs; Name: "{app}\ReadMe"
 Type: filesandordirs; Name: "{app}\Servlet"
 Type: filesandordirs; Name: "{app}\Version"
 Type: filesandordirs; Name: "{app}\imgui.ini"
+Type: filesandordirs; Name: "{app}\SKIF.ini"
 Type: filesandordirs; Name: "{app}\patrons.txt"
 Type: dirifempty;     Name: "{app}"  
 Type: dirifempty;     Name: "{userdocs}\My Mods"
