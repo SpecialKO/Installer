@@ -11,8 +11,11 @@
 #define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts   
 #define OutputDir         "Builds"                        ; Output folder to put compiled builds of the installer   
 #define AssetsDir         "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
-#define SpecialKVersion   GetStringFileInfo(SourceDir + '\SpecialK64.dll', "ProductVersion")
+#define SpecialKVersion   GetStringFileInfo(SourceDir + '\SpecialK64.dll', "ProductVersion") ; ProductVersion
 #define SKIFVersion       GetStringFileInfo(SourceDir + '\SKIF.exe',       "ProductVersion")
+
+#define public Dependency_NoExampleSetup
+#include "CodeDependencies.iss"
 
 
 [Setup]
@@ -43,7 +46,7 @@ PrivilegesRequiredOverridesAllowed = commandline
 OutputDir                          = {#OutputDir}
 OutputBaseFilename                 = SpecialK_{#SpecialKVersion}
 SetupIconFile                      = {#AssetsDir}\icon.ico
-Compression                        = lzma
+Compression                        = lzma2/ultra64
 SolidCompression                   = yes
 WizardStyle                        = modern
 WizardSmallImageFile               = {#AssetsDir}\WizardSmallImageFile.bmp
@@ -53,7 +56,6 @@ UninstallDisplayIcon               = {app}\SKIF.exe
 CloseApplications                  = yes
 DisableWelcomePage                 = no
 SetupLogging                       = yes
-
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -65,112 +67,169 @@ SetupWindowTitle ={#SpecialKName} v {#SpecialKVersion}
 UninstallAppTitle={#SpecialKName} Uninstall
 WelcomeLabel2    =This will install {#SpecialKName} v {#SpecialKVersion} on your computer.%n%nLovingly referred to as the Swiss Army Knife of PC gaming, Special K does a bit of everything. It is best known for fixing and enhancing graphics, its many detailed performance analysis and correction mods, and a constantly growing palette of tools that solve a wide variety of issues affecting PC games.%n%nIt is recommended that you close all other applications before continuing.
 ConfirmUninstall =Are you sure you want to completely remove %1 and all of its components?%n%nThis will also remove any Special K game data (configs, texture packs) stored in Documents\My Mods\SpecialK\Profiles.  
-
+DiskSpaceMBLabel =
 
 [Code]
 var
-  WbemLocator     : Variant;
-  WbemServices    : Variant;
-  OneDriveStopped : Boolean;
+  WbemLocator       : Variant;
+  WbemServices      : Variant;
+  OneDriveStopped   : Boolean;
+  MusicPlayback     : Boolean;
+  ToggleMusicButton : TNewButton;
+  CreditMusicButton : TNewButton;
 
 function SetWindowLong (Wnd : HWnd;     Index: Integer;  NewLong: Longint): Longint;  external 'SetWindowLongW@user32.dll stdcall';
 function GetWindowLong (Wnd : HWnd;     Index: Integer)                   : Longint;  external 'GetWindowLongW@user32.dll stdcall';
 function GetWindow     (HWND: Longint;  uCmd : cardinal)                  : Longint;  external 'GetWindow@user32.dll stdcall'; 
 
+// Used to play background music during installation
+function mciSendString(lpstrCommand: String; lpstrReturnString: Integer; uReturnLength: Cardinal; hWndCallback: HWND): Cardinal; external 'mciSendStringW@winmm.dll stdcall';
 
 
-// Fixes Inno Setup no taskbar preview
-// From: https://stackoverflow.com/questions/64060208/inno-setup-window-preview-in-taskbar
-// 
-// Technically wrong: "You must not call SetWindowLong with the GWL_HWNDPARENT index to change the parent of a child window.
-//                     Instead, use the SetParent function."
+// Dependency handler
+function InitializeSetup: Boolean;
+begin
+  // DirectX End-User Runtime    
+  //Dependency_AddDirectX;
+  // Not required any longer following the removal of CEGUI
+
+  // 32-bit Visual C++ 2015-2022 Redistributable
+  Dependency_ForceX86 := True;
+  Dependency_AddVC2015To2022;
+  Dependency_ForceX86 := False;
+  
+  // 64-bit Visual C++ 2015-2022 Redistributable
+  if IsWin64 then
+  begin
+    Dependency_AddVC2015To2022;
+  end;
+
+  Result := True;
+end;
+
+
+procedure ToggleButtonClick(Sender: TObject);
+begin
+  if MusicPlayback then
+  begin
+    mciSendString('stop soundbg', 0, 0, 0);
+    MusicPlayback := false;
+    ToggleMusicButton.Caption := 'Play Music';
+  end
+  else
+  begin
+    mciSendString('play soundbg repeat', 0, 0, 0);
+    MusicPlayback := true;
+    ToggleMusicButton.Caption := 'Stop Music';
+  end;
+end;
+
+
+procedure CreditButtonClick(Sender: TObject);
+var
+  ErrorCode: Integer;
+begin
+  ShellExec('', 'https://opengameart.org/content/stargazer', '', '', SW_SHOW, ewNoWait, ErrorCode);
+end;  
+
+
 procedure InitializeWizard();
 begin
+  // Fixes Inno Setup no taskbar preview
+  // From: https://stackoverflow.com/questions/64060208/inno-setup-window-preview-in-taskbar
+  // 
+  // Technically wrong: "You must not call SetWindowLong with the GWL_HWNDPARENT index to change the parent of a child window.
+  //                     Instead, use the SetParent function."
   SetWindowLong(WizardForm.Handle, -8, GetWindowLong(GetWindow(WizardForm.Handle, 4), -8));
   WizardForm.DiskSpaceLabel.Parent := PageFromID(wpWelcome).Surface;
+
+  if not WizardSilent() then
+  begin
+    // Some nice background tunes
+    MusicPlayback := false;
+    ExtractTemporaryFile('techno_stargazev2.1loop.mp3');
+    mciSendString(ExpandConstant('open "{tmp}/techno_stargazev2.1loop.mp3" alias soundbg'), 0, 0, 0);
+    //mciSendString('play soundbg repeat', 0, 0, 0);
+    mciSendString('setaudio soundbg volume to 125', 0, 0, 0);
+
+    ToggleMusicButton         := TNewButton.Create(WizardForm);
+    ToggleMusicButton.Parent  := WizardForm;
+    ToggleMusicButton.Left    :=
+      WizardForm.ClientWidth -
+      WizardForm.CancelButton.Left - 
+      WizardForm.CancelButton.Width;
+    ToggleMusicButton.Top     := WizardForm.CancelButton.Top; //WizardForm.CancelButton.Top + 50;
+    ToggleMusicButton.Width   := WizardForm.CancelButton.Width;
+    ToggleMusicButton.Height  := WizardForm.CancelButton.Height;
+    ToggleMusicButton.Caption := 'Play Music';
+    ToggleMusicButton.OnClick := @ToggleButtonClick;
+    ToggleMusicButton.Anchors := [akLeft, akBottom];
+
+    CreditMusicButton         := TNewButton.Create(WizardForm);
+    CreditMusicButton.Parent  := WizardForm;
+    CreditMusicButton.Left    :=
+      WizardForm.ClientWidth -
+      WizardForm.NextButton.Left -
+      WizardForm.NextButton.Width;
+    CreditMusicButton.Top     := WizardForm.NextButton.Top; //WizardForm.CancelButton.Top + 50;
+    CreditMusicButton.Width   := WizardForm.NextButton.Width;
+    CreditMusicButton.Height  := WizardForm.NextButton.Height;
+    CreditMusicButton.Caption := 'Music By';
+    CreditMusicButton.OnClick := @CreditButtonClick;
+    CreditMusicButton.Anchors := [akLeft, akBottom];
+  end;
+end;
+
+
+procedure DeinitializeSetup();
+begin
+  if not WizardSilent() then
+  begin
+    if MusicPlayback then
+    begin
+      // Stop music playback if it's currently playing
+      mciSendString(ExpandConstant('stop soundbg'), 0, 0, 0);
+      MusicPlayback := false;
+    end;
+    // Close the MCI device
+    mciSendString(ExpandConstant('close all'), 0, 0, 0);
+  end;
 end;
 
 
 procedure CurPageChanged(CurPageID: Integer);
+var
+  AdditionalTasks : String;
 begin
   if CurPageID = wpReady then
   begin
     Wizardform.ReadyMemo.Font.Name := 'Consolas';
+
+    // CodeDependencies.iss adds the additional tasks to the ReadyMemo before this code executes,
+    //   so make a copy of the current text, then clear the lines.
+    AdditionalTasks := Wizardform.ReadyMemo.Text;
+    Wizardform.ReadyMemo.Lines.Clear();
+
+    // Let's add our custom lines
+    Wizardform.ReadyMemo.Lines.Add('');
     Wizardform.ReadyMemo.Lines.Add('Components to install:');
-    Wizardform.ReadyMemo.Lines.Add('    Special K                           v {#SpecialKVersion}');
-    Wizardform.ReadyMemo.Lines.Add('    Special K Injection Frontend (SKIF) v {#SKIFVersion}');
+    Wizardform.ReadyMemo.Lines.Add('      Special K                           v {#SpecialKVersion}');
+    Wizardform.ReadyMemo.Lines.Add('      Special K Injection Frontend (SKIF) v {#SKIFVersion}');
     Wizardform.ReadyMemo.Lines.Add('');
     Wizardform.ReadyMemo.Lines.Add('Destination location:');
-    Wizardform.ReadyMemo.Lines.Add(ExpandConstant('    {app}'));
+    Wizardform.ReadyMemo.Lines.Add(ExpandConstant('      {app}'));
     Wizardform.ReadyMemo.Lines.Add('');
     Wizardform.ReadyMemo.Lines.Add('Shortcuts:');
-    Wizardform.ReadyMemo.Lines.Add('    Desktop');
-    Wizardform.ReadyMemo.Lines.Add('    Start menu');
+    Wizardform.ReadyMemo.Lines.Add('      Desktop');
+    Wizardform.ReadyMemo.Lines.Add('      Start menu');
     Wizardform.ReadyMemo.Lines.Add('');
+
+    // And finally if there is any additional tasks from CodeDependencies.iss, add them back.
+    Wizardform.ReadyMemo.Lines.Add(AdditionalTasks); 
+
     Wizardform.ReadyMemo.Show;
   end;
 end;                  
-
-
-function MissingVC2019x64Redist: Boolean;
-var 
-  Version: String;
-begin
-  Result := true;
-  
-  // Check IsWin64 before using a 64-bit-only feature to
-  // avoid an exception when running on 32-bit Windows.
-  if IsWin64 then
-  begin
-    // Is the installed version at least 14.29 ?
-    if (RegQueryStringValue(HKLM64, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'Version', Version)) then
-    begin
-      Log('Visual C++ 2019 x64 Redist version check : found ' + Version)
-      Result := (CompareStr(Version, 'v14.29.30037.00') < 0);
-    end;
-
-    if Length(Version) = 0 then
-    begin
-      Log('Visual C++ 2019 x64 Redist version check : not installed');
-    end;
-  end
-  else
-  begin
-    Result := false;
-  end;
-end;
-
-
-function MissingVC2019x86Redist: Boolean;
-var 
-  Version: String;
-begin
-  Result := true;
-
-  // Is the installed version at least 14.29 ?
-  if (RegQueryStringValue(HKLM32, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86', 'Version', Version)) then
-  begin
-    Log('Visual C++ 2019 x86 Redist version check : found ' + Version)
-    Result := (CompareStr(Version, 'v14.29.30037.00') < 0);
-  end;
-
-  if Length(Version) = 0 then
-    Log('Visual C++ 2019 x86 Redist version check : not installed');
-end;
-   
-
-function MissingDXWebSetupRedist: Boolean;
-begin
-  if not FileExists(ExpandConstant('{sys}\XAudio2_0.dll')) then
-    Result := True
-  else
-    Result := False;
-
-  if Result then
-    Log('DirectX End-User Runtime : not installed')
-  else
-    Log('DirectX End-User Runtime : installed');
-end;
 
 
 function IsGlobalInjectorOrSKIFRunning(): Boolean;
@@ -181,11 +240,39 @@ begin
   Result := false;
 
   try
-    WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "rundll32.exe" OR Name = "SKIF.exe") AND (CommandLine LIKE "%SpecialK%" OR ExecutablePath LIKE "%SpecialK%")');
+    WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIFsvc.exe" OR Name = "SKIF.exe" OR Name = "rundll32.exe") AND (CommandLine LIKE "%SpecialK%" OR ExecutablePath LIKE "%SpecialK%")');
 
     if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then      
       Result := true;
 
+  except
+    // Surpresses exception when an issue prevents proper lookup
+  end;
+end;
+
+
+function IsSKIFRunning(): Boolean;
+var
+  WbemObjectSet : Variant;
+    
+begin
+  Result := false;
+
+  try
+    WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIF.exe")');
+
+    if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then      
+      Result := true;
+
+  except
+    // Surpresses exception when an issue prevents proper lookup
+  end;
+end;
+
+function StopSKIF(): Integer;
+begin
+  try
+    Exec('taskkill.exe', '/F /IM SKIF.exe', '', SW_HIDE, ewNoWait, Result);
   except
     // Surpresses exception when an issue prevents proper lookup
   end;
@@ -243,6 +330,10 @@ begin
 
     WizardForm.PreparingLabel.Visible := True;
     WizardForm.PreparingLabel.Caption := '';
+    Wizardform.NextButton.Visible := False;
+    Wizardform.NextButton.Enabled := False;
+    Wizardform.BackButton.Visible := False;
+    Wizardform.BackButton.Enabled := False;
 
     // Determine if OneDrive is running and if so prompt user about closing it
 
@@ -271,33 +362,33 @@ begin
     if (Result = '') then
     begin
 
-      // Running PowerShell script to check if user is a member of the local 'Performance Log Users' group
-      WizardForm.PreparingLabel.Caption := 'Checking membership in the local ''Performance Log Users'' group...';
-      Log('Checking membership in the local ''Performance Log Users'' group...');
+      if not WizardSilent() then
+      begin
+        // Running PowerShell script to check if user is a member of the local 'Performance Log Users' group
+        WizardForm.PreparingLabel.Caption := 'Checking membership in the local ''Performance Log Users'' group...';
+        Log('Checking membership in the local ''Performance Log Users'' group...');
 
-      ExtractTemporaryFile('Add-PerformanceLogMember.ps1');
-             
-      //Log('Calling a Powershell session to run Add-PerformanceLogMember.ps1');
-      ShellExec('Open', 'powershell', '-NonInteractive -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}') + '\Add-PerformanceLogMember.ps1"', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);      
+        ExtractTemporaryFile('Add-PerformanceLogMember.ps1');
+        ShellExec('Open', 'powershell', '-NonInteractive -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}') + '\Add-PerformanceLogMember.ps1"', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);      
 
-      Sleep(500);
+        Sleep(500);
 
-      if ResultCode <> 0 then
-        Log('Failed to run PowerShell session : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
+        if ResultCode <> 0 then
+          Log('Failed to run PowerShell session : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
 
-      
-      ResultCode   := 0;
+        ResultCode   := 0;
+      end;
 
       // Clean up any remains from super duper old legacy global injection method
       WizardForm.PreparingLabel.Caption := 'Determining if a legacy injection method is present on the system...';
       Log('Checking for legacy AppInit_DLLs method...');
 
-      AppInitDLLs32  := '';
-      AppInitDLLs64  := '';
+      AppInitDLLs32    := '';
+      AppInitDLLs64    := '';
       AppInitDLLs32Pos := 0;
       AppInitDLLs64Pos := 0;
 
-      RegQueryStringValue(HKLM32, 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows', 'AppInit_DLLs', AppInitDLLs32);
+      RegQueryStringValue  (HKLM32, 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows', 'AppInit_DLLs', AppInitDLLs32);
       if IsWin64 then
       begin
         RegQueryStringValue(HKLM64, 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows', 'AppInit_DLLs', AppInitDLLs64);
@@ -321,83 +412,36 @@ begin
         if ResultCode <> 0 then
           Log('Failed to run elevated PowerShell session : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
       end;
+
       
-
-      WizardForm.PreparingLabel.Caption := 'Determining if any prerequisites are missing...';
-
-      // If installer is running silently
-
-      if WizardSilent() then
-        VCRedistArgs := VCRedistArgs + ' /install /quiet';
-      
-
-      ResultCode   := 0;
-
-      // Visual C++ 2019 x64 redistributables
-      if MissingVC2019x64Redist() then
-      begin
-        WizardForm.PreparingLabel.Caption := 'Extracting Visual C++ 2019 x64 redistributables...';
-        ExtractTemporaryFile('VC_redist.x64.exe');
-        
-        WizardForm.PreparingLabel.Caption := 'Installing Visual C++ 2019 x64 redistributables...';
-        Exec(ExpandConstant('{tmp}\VC_redist.x64.exe'), VCRedistArgs, '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
-
-        if (ResultCode <> 0) and (ResultCode <> 1603) and (ResultCode <> 3010) then
-          Result := Result + 'Visual C++ 2019 x64 redist installation failed : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode) + #13#10;
-      end;
-
-
-      ResultCode := 0;
-
-      // Visual C++ 2019 x86 redistributables
-      if MissingVC2019x86Redist() then
-      begin
-        WizardForm.PreparingLabel.Caption := 'Extracting Visual C++ 2019 x86 redistributables...';
-        ExtractTemporaryFile('VC_redist.x86.exe');
-
-        WizardForm.PreparingLabel.Caption := 'Installing Visual C++ 2019 x86 redistributables...';
-        Exec(ExpandConstant('{tmp}\VC_redist.x86.exe'), VCRedistArgs, '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
-
-        if (ResultCode <> 0) and (ResultCode <> 1603) and (ResultCode <> 3010) then
-          Result := Result + 'Visual C++ 2019 x86 redist installation failed : ' +IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode) + #13#10;
-      end;
-
-      // Currently dxwebsetup seems to return garbage result codes even when the installer goes perfectly fine, so we'll have to omit those.
-      // Must be run non-silently as otherwise it fails
-      ResultCode := 0;
-      if (MissingDXWebSetupRedist()) and not (WizardSilent()) then
-      begin
-        WizardForm.PreparingLabel.Caption := 'Extracting DirectX End-User runtime...';
-        ExtractTemporaryFile('dxwebsetup.exe');
-
-        WizardForm.PreparingLabel.Caption := 'Installing DirectX End-User runtime...';
-        ShellExec('RunAs', ExpandConstant('{tmp}\dxwebsetup.exe'), '', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
-
-        //if (ResultCode <> 0) and (ResultCode <> 3010) then
-        //begin
-        //  Result := 'DirectX End-User runtime installation failed : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode);
-        //  Log(Result);
-        //end
-      end;
-
-
-      if not (Result = '') then
-        Log(Result);
-
-
       // Stop current running global injection
-
       if (IsGlobalInjectorOrSKIFRunning()) and (FileExists(ExpandConstant('{app}\SKIF.exe'))) then
       begin 
         Log('Stopping Special K Injection Frontend (SKIF) and the global injection service...');
         WizardForm.PreparingLabel.Caption := 'Stopping Special K Injection Frontend (SKIF) and the global injection service...';
-        Exec(ExpandConstant('{app}\SKIF.exe'), 'Stop Quit', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+        if FileExists(ExpandConstant('{app}\SpecialK32.dll')) or FileExists(ExpandConstant('{app}\SpecialK64.dll')) then
+          Exec(ExpandConstant('{app}\SKIF.exe'), 'Stop Quit', '', SW_HIDE, ewWaitUntilTerminated, ResultCode)
+        else
+          Exec(ExpandConstant('{app}\SKIF.exe'), 'Quit', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
         Sleep(500);
       end;
 
-      // Remove existing DLL files, or rename them if removing fails
+      
+      // If SKIF is still running, force close it
+      if (IsSKIFRunning()) then
+      begin 
+        Log('Forcefully stopping Special K Injection Frontend (SKIF)...');
+        WizardForm.PreparingLabel.Caption := 'Forcefully stopping Special K Injection Frontend (SKIF)...';
 
+        StopSKIF();
+
+        Sleep(500);
+      end;
+
+
+      // Remove existing DLL files, or rename them if removing fails
       if FileExists(ExpandConstant('{app}\SpecialK32.dll')) or FileExists(ExpandConstant('{app}\SpecialK64.dll')) then
       begin
         Log('Performing final preparations...');
@@ -440,7 +484,7 @@ begin
       Result := true;
     end;
     
-    WbemLocator.Release();
+    WbemLocator .Release();
     WbemServices.Release();
 
   except
@@ -538,7 +582,7 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
-    // Check if we're on 32-bit Windopws
+    // Check if we're on 32-bit Windows
     if IsWin64 then
     begin
       Log('Windows 64-bit detected. Cleaning up 32-bit components.');
@@ -572,6 +616,11 @@ Type: files;          Name: "{app}\SpecialK32.pdb"
 Type: files;          Name: "{app}\SpecialK64.pdb"
 Type: files;          Name: "{app}\unins00*"
 Type: files;          Name: "{app}\Servlet\unins00*"
+Type: files;          Name: "{app}\Servlet\driver_install.bat"
+Type: files;          Name: "{app}\Servlet\driver_uninstall.bat"
+Type: files;          Name: "{app}\Servlet\disable_logon.bat"
+Type: files;          Name: "{app}\Servlet\enable_logon.bat"
+Type: files;          Name: "{app}\Servlet\task_eject.bat"
 
 [Registry]
 Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K 32-bit Global Injection Service Host";             Flags: uninsdeletevalue
@@ -582,23 +631,24 @@ Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\SKIF.ex
 [Files]
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
-; Main Special K files
+; NOTE: When solid compression is enabled, be sure to list your temporary files at (or near) the top of the [Files] section.
+; In order to extract an arbitrary file in a solid-compressed installation, Setup must first decompress all prior files (to a temporary buffer in memory).
+; This can result in a substantial delay if a number of other files are listed above the specified file in the [Files] section.
+
+; Temporary files that are extracted as needed
+Source: "{#RedistDir}\Add-PerformanceLogMember.ps1"; DestDir: {tmp};           Flags: dontcopy;              
+Source: "{#RedistDir}\Unregister-AppInitDLLs.ps1";   DestDir: {tmp};           Flags: dontcopy;
+Source: "{#AssetsDir}\techno_stargazev2.1loop.mp3";  DestDir: {tmp};           Flags: dontcopy;
+
+; Main Special K files should always be overwritten
 Source: "{#SourceDir}\{#SpecialKExeName}";           DestDir: "{app}";         Flags: ignoreversion;
 Source: "{#SourceDir}\SpecialK32.dll";               DestDir: "{app}";         Flags: ignoreversion;
 Source: "{#SourceDir}\SpecialK64.dll";               DestDir: "{app}";         Flags: ignoreversion;
 Source: "{#SourceDir}\Servlet\*";                    DestDir: "{app}\Servlet"; Flags: ignoreversion;
+
+; Remaining files should only be created if they do not exist already.
+; NOTE: This line causes the files included above to be counted twice in DiskSpaceMBLabel
 Source: "{#SourceDir}\*";                            DestDir: "{app}";         Flags: onlyifdoesntexist recursesubdirs createallsubdirs;
-
-; VC++ redistributable runtime. Extracted by MissingVC2019x64Redist() or MissingVC2019x86Redist(), if needed.
-Source: "{#RedistDir}\VC_redist.x64.exe";            DestDir: {tmp};           Flags: dontcopy;    
-Source: "{#RedistDir}\VC_redist.x86.exe";            DestDir: {tmp};           Flags: dontcopy;
-
-; DirectX redistributable runtime. Extracted by MissingDXWebSetupRedist(), if needed.  
-Source: "{#RedistDir}\dxwebsetup.exe";               DestDir: {tmp};           Flags: dontcopy;
-
-; PowerShell install scripts. Extracted if needed.              
-Source: "{#RedistDir}\Unregister-AppInitDLLs.ps1";   DestDir: {tmp};           Flags: dontcopy;
-Source: "{#RedistDir}\Add-PerformanceLogMember.ps1"; DestDir: {tmp};           Flags: dontcopy;
 
 
 [Dirs]
@@ -633,7 +683,7 @@ Filename: "https://www.patreon.com/Kaldaien";       Description: "Support the pr
 ; Start up OneDrive again after installation has succeeded
 
 Filename: "{localappdata}\Microsoft\OneDrive\OneDrive.exe";   Description: "Start OneDrive";    Parameters: "/background";    \
-  Flags: nowait;    Check: RestartOneDrive;
+  Flags: nowait;      Check: RestartOneDrive;
 
 [UninstallDelete]
 Type: files;          Name: "{userprograms}\Startup\SKIM64.lnk"

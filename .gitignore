@@ -36,3 +36,4 @@ packages/
 # Non-default ignores
 Builds/
 Source/SpecialK*.dll
+/Assets/techno_stargazev2.1loop_uncompressed.mp3
