@@ -89,19 +89,34 @@ function mciSendString(lpstrCommand: String; lpstrReturnString: Integer; uReturn
 // Dependency handler
 function InitializeSetup: Boolean;
 begin
+  Log('Initializing Setup.');
+
+  Log('Required dependencies:');
+
   // DirectX End-User Runtime    
+
   //Dependency_AddDirectX;
   // Not required any longer following the removal of CEGUI
-
-  // 32-bit Visual C++ 2015-2022 Redistributable
-  Dependency_ForceX86 := True;
-  Dependency_AddVC2015To2022;
-  Dependency_ForceX86 := False;
   
+  // 32-bit Visual C++ 2015-2022 Redistributable
+  try
+    Log('+ 32-bit Visual C++ 2015-2022 Redistributable');
+    Dependency_ForceX86 := True;
+    Dependency_AddVC2015To2022;
+    Dependency_ForceX86 := False;
+  except
+    // Surpresses exception when an issue prevents proper lookup
+  end;
+      
   // 64-bit Visual C++ 2015-2022 Redistributable
   if IsWin64 then
   begin
-    Dependency_AddVC2015To2022;
+    try
+      Log('+ 64-bit Visual C++ 2015-2022 Redistributable');
+      Dependency_AddVC2015To2022;
+    except
+      // Surpresses exception when an issue prevents proper lookup
+    end;
   end;
 
   Result := True;
@@ -134,7 +149,9 @@ end;
 
 
 procedure InitializeWizard();
-begin
+begin 
+  Log('Initializing Wizard.');
+
   // Fixes Inno Setup no taskbar preview
   // From: https://stackoverflow.com/questions/64060208/inno-setup-window-preview-in-taskbar
   // 
@@ -144,7 +161,8 @@ begin
   WizardForm.DiskSpaceLabel.Parent := PageFromID(wpWelcome).Surface;
 
   if not WizardSilent() then
-  begin
+  begin 
+    Log('Preparing music components.');
     // Some nice background tunes
     MusicPlayback := false;
     ExtractTemporaryFile('techno_stargazev2.1loop.mp3');
@@ -184,7 +202,8 @@ end;
 procedure DeinitializeSetup();
 begin
   if not WizardSilent() then
-  begin
+  begin 
+    Log('Cleaning up music components.');
     if MusicPlayback then
     begin
       // Stop music playback if it's currently playing
@@ -202,7 +221,9 @@ var
   AdditionalTasks : String;
 begin
   if CurPageID = wpReady then
-  begin
+  begin 
+    Log('Initializing Ready Page.');
+
     Wizardform.ReadyMemo.Font.Name := 'Consolas';
 
     // CodeDependencies.iss adds the additional tasks to the ReadyMemo before this code executes,
@@ -312,17 +333,17 @@ function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   WasVisible       : Boolean;
   ResultCode       : Integer;
-  VCRedistArgs     : String;
   AppInitDLLs32    : String;
   AppInitDLLs32Pos : Integer;
   AppInitDLLs64    : String;
   AppInitDLLs64Pos : Integer;
 
-begin
+begin 
+  Log('Preparing Install.');
+
   WasVisible   := WizardForm.PreparingLabel.Visible;
   Result       := '';
   ResultCode   := 0;
-  VCRedistArgs := '/norestart';
 
   try 
     WbemLocator   := CreateOleObject('WbemScripting.SWbemLocator');
@@ -366,7 +387,7 @@ begin
       begin
         // Running PowerShell script to check if user is a member of the local 'Performance Log Users' group
         WizardForm.PreparingLabel.Caption := 'Checking membership in the local ''Performance Log Users'' group...';
-        Log('Checking membership in the local ''Performance Log Users'' group...');
+        Log('Checking membership in the local ''Performance Log Users'' group.');
 
         ExtractTemporaryFile('Add-PerformanceLogMember.ps1');
         ShellExec('Open', 'powershell', '-NonInteractive -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}') + '\Add-PerformanceLogMember.ps1"', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);      
@@ -381,7 +402,7 @@ begin
 
       // Clean up any remains from super duper old legacy global injection method
       WizardForm.PreparingLabel.Caption := 'Determining if a legacy injection method is present on the system...';
-      Log('Checking for legacy AppInit_DLLs method...');
+      Log('Checking for legacy AppInit_DLLs method.');
 
       AppInitDLLs32    := '';
       AppInitDLLs64    := '';
@@ -432,7 +453,7 @@ begin
       // If SKIF is still running, force close it
       if (IsSKIFRunning()) then
       begin 
-        Log('Forcefully stopping Special K Injection Frontend (SKIF)...');
+        Log('Forcefully stopping Special K Injection Frontend (SKIF).');
         WizardForm.PreparingLabel.Caption := 'Forcefully stopping Special K Injection Frontend (SKIF)...';
 
         StopSKIF();
@@ -444,7 +465,7 @@ begin
       // Remove existing DLL files, or rename them if removing fails
       if FileExists(ExpandConstant('{app}\SpecialK32.dll')) or FileExists(ExpandConstant('{app}\SpecialK64.dll')) then
       begin
-        Log('Performing final preparations...');
+        Log('Performing final preparations.');
 
         WizardForm.PreparingLabel.Caption := 'Performing final preparations...';
 
@@ -525,7 +546,9 @@ var
     PowerShellArgs   : String;
 begin
   if CurUninstallStep = usUninstall then
-  begin
+  begin 
+    Log('Preparing Uninstall.');
+
     DefaultCaption := UninstallProgressForm.StatusLabel.Caption;
     InstallFolder := ExpandConstant('{app}');
 
@@ -578,29 +601,6 @@ begin
 end;
 
 
-procedure CurStepChanged(CurStep: TSetupStep);
-begin
-  if CurStep = ssPostInstall then
-  begin
-    // Check if we're on 32-bit Windows
-    if IsWin64 then
-    begin
-      Log('Windows 64-bit detected. Cleaning up 32-bit components.');
-      DeleteFile(ExpandConstant('{app}\SKIF32.exe'));
-    end
-    else
-    begin
-      Log('Windows 32-bit detected. Cleaning up 64-bit components.');
-      DeleteFile(ExpandConstant('{app}\SKIF.exe'));
-      DeleteFile(ExpandConstant('{app}\SpecialK64.dll'));
-      DeleteFile(ExpandConstant('{app}\SpecialK64.pdb'));
-      DeleteFile(ExpandConstant('{app}\Servlet\SKIFsvc64.exe'));
-      RenameFile(ExpandConstant('{app}\SKIF32.exe'), ExpandConstant('{app}\SKIF.exe'));
-    end;
-  end;
-end;
-
-
 function RestartOneDrive: Boolean;
 begin
   Result := OneDriveStopped;
@@ -636,20 +636,23 @@ Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\SKIF.ex
 ; This can result in a substantial delay if a number of other files are listed above the specified file in the [Files] section.
 
 ; Temporary files that are extracted as needed
-Source: "{#RedistDir}\Add-PerformanceLogMember.ps1"; DestDir: {tmp};           Flags: dontcopy;              
-Source: "{#RedistDir}\Unregister-AppInitDLLs.ps1";   DestDir: {tmp};           Flags: dontcopy;
-Source: "{#AssetsDir}\techno_stargazev2.1loop.mp3";  DestDir: {tmp};           Flags: dontcopy;
+Source: "{#RedistDir}\Add-PerformanceLogMember.ps1"; DestDir: {tmp};            Flags: dontcopy;              
+Source: "{#RedistDir}\Unregister-AppInitDLLs.ps1";   DestDir: {tmp};            Flags: dontcopy;
+Source: "{#AssetsDir}\techno_stargazev2.1loop.mp3";  DestDir: {tmp};            Flags: dontcopy;
 
 ; Main Special K files should always be overwritten
-Source: "{#SourceDir}\{#SpecialKExeName}";           DestDir: "{app}";         Flags: ignoreversion;
-Source: "{#SourceDir}\SpecialK32.dll";               DestDir: "{app}";         Flags: ignoreversion;
-Source: "{#SourceDir}\SpecialK64.dll";               DestDir: "{app}";         Flags: ignoreversion;
-Source: "{#SourceDir}\Servlet\*";                    DestDir: "{app}\Servlet"; Flags: ignoreversion;
+Source: "{#SourceDir}\SKIF.exe";                     DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64;
+Source: "{#SourceDir}\SKIF32.exe";                   DestDir: "{app}";          Flags: ignoreversion;  DestName: "SKIF.exe";     Check: not IsWin64;  
+Source: "{#SourceDir}\SpecialK32.dll";               DestDir: "{app}";          Flags: ignoreversion;
+Source: "{#SourceDir}\SpecialK32.pdb";               DestDir: "{app}";          Flags: ignoreversion skipifsourcedoesntexist;
+Source: "{#SourceDir}\SpecialK64.dll";               DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64;
+Source: "{#SourceDir}\SpecialK64.pdb";               DestDir: "{app}";          Flags: ignoreversion skipifsourcedoesntexist;    Check: IsWin64;
+Source: "{#SourceDir}\Servlet\SKIFsvc64.exe";        DestDir: "{app}\Servlet";  Flags: ignoreversion;                            Check: IsWin64;
+Source: "{#SourceDir}\Servlet\*";                    DestDir: "{app}\Servlet";  Flags: ignoreversion;  Excludes: "SKIFsvc64.exe" 
 
 ; Remaining files should only be created if they do not exist already.
 ; NOTE: This line causes the files included above to be counted twice in DiskSpaceMBLabel
-Source: "{#SourceDir}\*";                            DestDir: "{app}";         Flags: onlyifdoesntexist recursesubdirs createallsubdirs;
-
+Source: "{#SourceDir}\*";                            DestDir: "{app}";          Flags: onlyifdoesntexist recursesubdirs createallsubdirs;  Excludes: "SKIF.exe,SKIF32.exe,\SpecialK32.dll,\SpecialK32.pdb,\SpecialK64.dll,\SpecialK64.pdb,\Servlet" 
 
 [Dirs]
 Name: "{app}\Profiles"
