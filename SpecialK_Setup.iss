@@ -77,6 +77,7 @@ var
   MusicPlayback     : Boolean;
   ToggleMusicButton : TNewButton;
   CreditMusicButton : TNewButton;
+  OneDrivePath      : String;
 
 function SetWindowLong (Wnd : HWnd;     Index: Integer;  NewLong: Longint): Longint;  external 'SetWindowLongW@user32.dll stdcall';
 function GetWindowLong (Wnd : HWnd;     Index: Integer)                   : Longint;  external 'GetWindowLongW@user32.dll stdcall';
@@ -258,8 +259,6 @@ var
   WbemObjectSet : Variant;
     
 begin
-  Result := false;
-
   try
     WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIFsvc.exe" OR Name = "SKIF.exe" OR Name = "rundll32.exe") AND (CommandLine LIKE "%SpecialK%" OR ExecutablePath LIKE "%SpecialK%")');
 
@@ -277,8 +276,6 @@ var
   WbemObjectSet : Variant;
     
 begin
-  Result := false;
-
   try
     WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIF.exe")');
 
@@ -303,16 +300,21 @@ end;
 function IsOneDriveRunning(): Boolean;
 var
   WbemObjectSet : Variant;
+  Path : String;
     
 begin
-  Result := false;
-
   try
-    WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "OneDrive.exe")');
+    WbemObjectSet := WbemServices.ExecQuery('SELECT ExecutablePath FROM Win32_Process WHERE (Name = "OneDrive.exe")');
 
     if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
-      Result := true;
-
+    begin
+      Path := WbemObjectSet.ItemIndex(0).ExecutablePath;
+      if Length(Path) > 0 then
+      begin
+        OneDrivePath := Path;
+        Result := true;
+      end;
+    end;
   except
     // Surpresses exception when an issue prevents proper lookup
   end;
@@ -326,6 +328,11 @@ begin
   except
     // Surpresses exception when an issue prevents proper lookup
   end;
+end;
+
+function GetOneDrivePath(Value: string): string;
+begin
+  Result := OneDrivePath;
 end;
 
 
@@ -493,8 +500,6 @@ var
   WbemObjectSet : Variant;
     
 begin
-  Result := false;
-
   try
     WbemLocator   := CreateOleObject('WbemScripting.SWbemLocator');
     WbemServices  := WbemLocator.ConnectServer('localhost', 'root\CIMV2');
@@ -520,8 +525,6 @@ var
   Folder: Variant;
   Task: Variant;
 begin
-  Result := false;
-
   try
     TaskService := CreateOleObject('Schedule.Service');
     TaskService.Connect();
@@ -685,7 +688,7 @@ Filename: "https://www.patreon.com/Kaldaien";       Description: "Support the pr
 
 ; Start up OneDrive again after installation has succeeded
 
-Filename: "{localappdata}\Microsoft\OneDrive\OneDrive.exe";   Description: "Start OneDrive";    Parameters: "/background";    \
+Filename: "{code:GetOneDrivePath}";                 Description: "Start OneDrive";    Parameters: "/background"; \
   Flags: nowait;      Check: RestartOneDrive;
 
 [UninstallDelete]
