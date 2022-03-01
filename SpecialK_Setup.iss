@@ -79,20 +79,57 @@ var
   CreditMusicButton : TNewButton;
   OneDrivePath      : String;
 
-function SetWindowLong (Wnd : HWnd;     Index: Integer;  NewLong: Longint): Longint;  external 'SetWindowLongW@user32.dll stdcall';
-function GetWindowLong (Wnd : HWnd;     Index: Integer)                   : Longint;  external 'GetWindowLongW@user32.dll stdcall';
-function GetWindow     (HWND: Longint;  uCmd : cardinal)                  : Longint;  external 'GetWindow@user32.dll stdcall'; 
+//
+// CreateWellKnownSid   (WELL_KNOWN_SID_TYPE::WinBuiltinPerfLoggingUsersSid, NULL, &pfuSID, &cbSize)
+// CheckTokenMembership (NULL, &pfuSID, &pfuAccessToken)
+//
+
+//const
+//SECURITY_MAX_SID_SIZE = 68;
+//WinBuiltinPerfLoggingUsersSid = 58;
+
+//type
+// TSIDArray = Cardinal;
+
+// WELL_KNOWN_SID_TYPE::WinBuiltinPerfLoggingUsersSid = 58
+//function CreateWellKnownSid   (WellKnownSidType: Integer; DomainSid: Integer;  var   pfuSID: TSIDArray; cbSid: Cardinal) : Boolean;  external 'CreateWellKnownSid@advapi32.dll stdcall';
+//function CheckTokenMembership (     TokenHandle: HWND;   SidToCheck: Cardinal; var IsMember: Cardinal)                  : Boolean;  external 'CheckTokenMembership@advapi32.dll stdcall'; 
+
+// If Inno Setup ever becomes native 64-bit, the below rows needs to be changed to SetWindowLongPtrW/GetWindowLongPtrW
+function SetWindowLong ( Wnd: HWND;  nIndex: Integer;  dwNewLong: Longint): Longint;  external 'SetWindowLongW@user32.dll stdcall';
+function GetWindowLong ( Wnd: HWND;  nIndex: Integer)                     : Longint;  external 'GetWindowLongW@user32.dll stdcall';
+//function SetWindowLongPtr (Wnd : HWND;  nIndex: Integer;  dwNewLong: Longint): Longint;  external 'SetWindowLongPtrW@user32.dll stdcall';
+//function GetWindowLongPtr (Wnd : HWND;  nIndex: Integer)                     : Longint;  external 'GetWindowLongPtrW@user32.dll stdcall';
+function GetWindow     (hWnd: HWND;    uCmd: Cardinal)                    : HWND;     external 'GetWindow@user32.dll stdcall'; 
 
 // Used to play background music during installation
 function mciSendString(lpstrCommand: String; lpstrReturnString: Integer; uReturnLength: Cardinal; hWndCallback: HWND): Cardinal; external 'mciSendStringW@winmm.dll stdcall';
 
 
+// Used to check for the presence of cmd line switches
+function SwitchHasValue(Name: string; Value: string; DefaultValue: string): Boolean;
+begin
+  Result := CompareText(ExpandConstant('{param:' + Name + '|' + DefaultValue + '}'), Value) = 0;
+end;
+
+
 // Dependency handler
 function InitializeSetup: Boolean;
+//var
+  //pfuAccessToken : Boolean;
+  //pfuSID: TSIDArray;
+  //cbSize: Cardinal;
 begin
   Log('Initializing Setup.');
 
   Log('Required dependencies:');
+
+  //SetArrayLength(pfuSID, SECURITY_MAX_SID_SIZE * 4);
+  //cbSize := SizeOf(pfuSID);
+  //
+  //MsgBox(IntToStr(cbSize), mbConfirmation, MB_YESNOCANCEL);
+  //
+  //CreateWellKnownSid (WinBuiltinPerfLoggingUsersSid, 0, pfuSID, cbSize);
 
   // DirectX End-User Runtime    
 
@@ -159,6 +196,8 @@ begin
   // Technically wrong: "You must not call SetWindowLong with the GWL_HWNDPARENT index to change the parent of a child window.
   //                     Instead, use the SetParent function."
   SetWindowLong(WizardForm.Handle, -8, GetWindowLong(GetWindow(WizardForm.Handle, 4), -8));
+
+  // Have the disk spacel label appear here instead of later
   WizardForm.DiskSpaceLabel.Parent := PageFromID(wpWelcome).Surface;
 
   if not WizardSilent() then
@@ -241,10 +280,14 @@ begin
     Wizardform.ReadyMemo.Lines.Add('Destination location:');
     Wizardform.ReadyMemo.Lines.Add(ExpandConstant('      {app}'));
     Wizardform.ReadyMemo.Lines.Add('');
-    Wizardform.ReadyMemo.Lines.Add('Shortcuts:');
-    Wizardform.ReadyMemo.Lines.Add('      Desktop');
-    Wizardform.ReadyMemo.Lines.Add('      Start menu');
-    Wizardform.ReadyMemo.Lines.Add('');
+
+    if SwitchHasValue('Shortcuts', 'true', 'true') then
+    begin
+      Wizardform.ReadyMemo.Lines.Add('Shortcuts:');
+      Wizardform.ReadyMemo.Lines.Add('      Desktop');
+      Wizardform.ReadyMemo.Lines.Add('      Start menu');
+      Wizardform.ReadyMemo.Lines.Add('');
+    end;
 
     // And finally if there is any additional tasks from CodeDependencies.iss, add them back.
     Wizardform.ReadyMemo.Lines.Add(AdditionalTasks); 
@@ -262,8 +305,10 @@ begin
   try
     WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIFsvc.exe" OR Name = "SKIF.exe" OR Name = "rundll32.exe") AND (CommandLine LIKE "%SpecialK%" OR ExecutablePath LIKE "%SpecialK%")');
 
-    if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then      
+    if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
+    begin      
       Result := true;
+    end;
 
   except
     // Surpresses exception when an issue prevents proper lookup
@@ -279,8 +324,10 @@ begin
   try
     WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIF.exe")');
 
-    if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then      
+    if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
+    begin      
       Result := true;
+    end;
 
   except
     // Surpresses exception when an issue prevents proper lookup
@@ -402,7 +449,9 @@ begin
         Sleep(500);
 
         if ResultCode <> 0 then
+        begin
           Log('Failed to run PowerShell session : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
+        end;
 
         ResultCode   := 0;
       end;
@@ -438,7 +487,9 @@ begin
         Sleep(500);
 
         if ResultCode <> 0 then
+        begin
           Log('Failed to run elevated PowerShell session : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
+        end;
       end;
 
       
@@ -449,9 +500,13 @@ begin
         WizardForm.PreparingLabel.Caption := 'Stopping Special K Injection Frontend (SKIF) and the global injection service...';
 
         if FileExists(ExpandConstant('{app}\SpecialK32.dll')) or FileExists(ExpandConstant('{app}\SpecialK64.dll')) then
+        begin
           Exec(ExpandConstant('{app}\SKIF.exe'), 'Stop Quit', '', SW_HIDE, ewWaitUntilTerminated, ResultCode)
+        end
         else
+        begin
           Exec(ExpandConstant('{app}\SKIF.exe'), 'Quit', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+        end;
 
         Sleep(500);
       end;
@@ -480,10 +535,14 @@ begin
         DeleteFile(ExpandConstant('{app}\SpecialK64.old'));
 
         if not DeleteFile(ExpandConstant('{app}\SpecialK32.dll')) then
+        begin
           RenameFile(ExpandConstant('{app}\SpecialK32.dll'), ExpandConstant('{app}\SpecialK32.old'));
+        end;
 
         if not DeleteFile(ExpandConstant('{app}\SpecialK64.dll')) then
+        begin
           RenameFile(ExpandConstant('{app}\SpecialK64.dll'), ExpandConstant('{app}\SpecialK64.old'));
+        end;
       end;
     
     end;
@@ -531,8 +590,10 @@ begin
     Folder      := TaskService.GetFolder('\');
     Task        := Folder.GetTask('SK_InjectLogon');
 
-    if not VarIsNull(Task) and (Task.Name = 'SK_InjectLogon') then        
+    if not VarIsNull(Task) and (Task.Name = 'SK_InjectLogon') then
+    begin        
       Result := true;
+    end;
   except
     // Surpresses exception when task does not exist or another issue prevents proper lookup
   end;
@@ -564,7 +625,9 @@ begin
       Sleep(500);
 
       if ResultCode <> 0 then
+      begin
         Log('Global injection failed to stop : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
+      end;
     end;
     
 
@@ -572,20 +635,28 @@ begin
 
     IsKernelDriver := IsKernelDriverInstalled();
     if IsKernelDriver then
+    begin
       Log('Kernel driver check : installed');
+    end;
 
     IsSKIFAutoStart := IsSKIFAutoStartEnabled();
     if IsSKIFAutoStart then
+    begin
       Log('SKIF scheduled task : detected');
+    end;
 
     PowerShellArgs := '';
     ResultCode := 0;
 
     if IsSKIFAutoStart then
+    begin
       PowerShellArgs := PowerShellArgs + 'Unregister-ScheduledTask -TaskName ''SK_InjectLogon'' -Confirm:$false; Remove-Item -Path ([Environment]::GetFolderPath(''MyDocuments'') + ''\My Mods\SpecialK\Servlet\SpecialK.LogOn''); ';
-    
+    end;
+
     if IsKernelDriver then
+    begin
       PowerShellArgs := PowerShellArgs + 'Stop-Service -Name ''WinRing0_1_2_0''; sc.exe delete ''WinRing0_1_2_0''; ';
+    end;
 
     if (IsSKIFAutoStart) or (IsKernelDriver) then
     begin
@@ -596,7 +667,9 @@ begin
       Sleep(500);
 
       if ResultCode <> 0 then
+      begin
         Log('Failed to run elevated PowerShell commands : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
+      end;
     end;
 
     UninstallProgressForm.StatusLabel.Caption := DefaultCaption;
@@ -662,8 +735,8 @@ Name: "{app}\Profiles"
 
 
 [Icons]
-Name: "{userprograms}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}"
-Name:  "{autodesktop}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}"
+Name: "{userprograms}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');
+Name:  "{autodesktop}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');
 
 
 [Run]
