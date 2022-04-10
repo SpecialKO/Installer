@@ -78,22 +78,8 @@ var
   ToggleMusicButton : TNewButton;
   CreditMusicButton : TNewButton;
   OneDrivePath      : String;
-
-//
-// CreateWellKnownSid   (WELL_KNOWN_SID_TYPE::WinBuiltinPerfLoggingUsersSid, NULL, &pfuSID, &cbSize)
-// CheckTokenMembership (NULL, &pfuSID, &pfuAccessToken)
-//
-
-//const
-//SECURITY_MAX_SID_SIZE = 68;
-//WinBuiltinPerfLoggingUsersSid = 58;
-
-//type
-// TSIDArray = Cardinal;
-
-// WELL_KNOWN_SID_TYPE::WinBuiltinPerfLoggingUsersSid = 58
-//function CreateWellKnownSid   (WellKnownSidType: Integer; DomainSid: Integer;  var   pfuSID: TSIDArray; cbSid: Cardinal) : Boolean;  external 'CreateWellKnownSid@advapi32.dll stdcall';
-//function CheckTokenMembership (     TokenHandle: HWND;   SidToCheck: Cardinal; var IsMember: Cardinal)                  : Boolean;  external 'CheckTokenMembership@advapi32.dll stdcall'; 
+  LocPLUGroupName   : String;
+  LocINTUserName    : String;
 
 // If Inno Setup ever becomes native 64-bit, the below rows needs to be changed to SetWindowLongPtrW/GetWindowLongPtrW
 function SetWindowLong ( Wnd: HWND;  nIndex: Integer;  dwNewLong: Longint): Longint;  external 'SetWindowLongW@user32.dll stdcall';
@@ -105,7 +91,6 @@ function GetWindow     (hWnd: HWND;    uCmd: Cardinal)                    : HWND
 // Used to play background music during installation
 function mciSendString(lpstrCommand: String; lpstrReturnString: Integer; uReturnLength: Cardinal; hWndCallback: HWND): Cardinal; external 'mciSendStringW@winmm.dll stdcall';
 
-
 // Used to check for the presence of cmd line switches
 function SwitchHasValue(Name: string; Value: string; DefaultValue: string): Boolean;
 begin
@@ -113,26 +98,90 @@ begin
 end;
 
 
+// Checks if the required permissions exists for PresentMon stats
+function IsInteractiveInPLU(): Boolean;
+var
+  WbemObjectSet : Variant;
+  IsMember      : Boolean;
+  ComputerName  : String;
+  I             : Integer;      
+begin
+  try
+    (*
+      PS C:\> Get-WmiObject -Query "SELECT * FROM Win32_Group WHERE (LocalAccount = True) AND (SID = 'S-1-5-32-559')" | fl
+
+      Caption : <ComputerName>\Performance Log Users
+      Domain  : <ComputerName>
+      Name    : Performance Log Users
+      SID     : S-1-5-32-559
+
+      PS C:\> Get-WMIObject -Query 'ASSOCIATORS OF {Win32_Group.Domain="<ComputerName>",Name="Performance Log Users"} WHERE assocClass=Win32_GroupUser Role=GroupComponent ResultRole=PartComponent' | fl
+
+      Caption : <ComputerName>\INTERACTIVE
+      Domain  : <ComputerName>
+      Name    : INTERACTIVE
+      SID     : S-1-5-4
+    *)
+
+    // Retrieve the localized name of the PLU group  
+    WbemObjectSet      := WbemServices.ExecQuery('SELECT * FROM Win32_Group WHERE (LocalAccount = True) AND (SID = "S-1-5-32-559")');
+
+    if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
+    begin
+      ComputerName    := WbemObjectSet.ItemIndex(0).Domain;
+      LocPLUGroupName := WbemObjectSet.ItemIndex(0).Name;
+      
+      //MsgBox(ComputerName,    mbInformation, MB_OK);
+      //MsgBox(LocPLUGroupName, mbInformation, MB_OK);
+
+      if not VarIsNull(ComputerName) and not VarIsNull(LocPLUGroupName) then
+      begin
+        WbemObjectSet := Null;
+
+        // Retrieve members of the local PLU group
+        WbemObjectSet := WbemServices.ExecQuery('ASSOCIATORS OF {Win32_Group.Domain="' + ComputerName + '",Name="' + LocPLUGroupName + '"} WHERE assocClass=Win32_GroupUser Role=GroupComponent ResultRole=PartComponent');
+        if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
+        begin
+          for I := 0 to WbemObjectSet.Count - 1 do
+          begin
+            // Check if one of the members is NT AUTHORITY\Interactive 
+            if (WbemObjectSet.ItemIndex(I).SID = 'S-1-5-4') then
+            begin
+              IsMember := True;
+            end;
+          end;
+        end;
+      end;
+
+      // If Interactive was not a member, we still need to retrieve the localized username
+      if not IsMember then
+      begin
+        WbemObjectSet := Null;
+          
+        WbemObjectSet      := WbemServices.ExecQuery('SELECT * FROM Win32_SystemAccount WHERE (LocalAccount = True) AND (SID = "S-1-5-4")');
+        if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
+        begin
+          LocINTUserName := WbemObjectSet.ItemIndex(0).Name;
+        end;
+      end;
+
+      Result := IsMember;
+    end;
+
+  except
+    // Surpresses exception when an issue prevents proper lookup
+  end;
+end;
+
+
 // Dependency handler
 function InitializeSetup: Boolean;
-//var
-  //pfuAccessToken : Boolean;
-  //pfuSID: TSIDArray;
-  //cbSize: Cardinal;
 begin
   Log('Initializing Setup.');
 
   Log('Required dependencies:');
 
-  //SetArrayLength(pfuSID, SECURITY_MAX_SID_SIZE * 4);
-  //cbSize := SizeOf(pfuSID);
-  //
-  //MsgBox(IntToStr(cbSize), mbConfirmation, MB_YESNOCANCEL);
-  //
-  //CreateWellKnownSid (WinBuiltinPerfLoggingUsersSid, 0, pfuSID, cbSize);
-
-  // DirectX End-User Runtime    
-
+  // DirectX End-User Runtime
   //Dependency_AddDirectX;
   // Not required any longer following the removal of CEGUI
   
@@ -439,18 +488,21 @@ begin
 
       if not WizardSilent() then
       begin
-        // Running PowerShell script to check if user is a member of the local 'Performance Log Users' group
+        // Check if NT AUTHORITY\INTERACTIVE is in BUILTIN\Performance Log Users and if not, make it so
         WizardForm.PreparingLabel.Caption := 'Checking membership in the local ''Performance Log Users'' group...';
         Log('Checking membership in the local ''Performance Log Users'' group.');
 
-        ExtractTemporaryFile('Add-PerformanceLogMember.ps1');
-        ShellExec('Open', 'powershell', '-NonInteractive -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}') + '\Add-PerformanceLogMember.ps1"', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);      
-
-        Sleep(500);
-
-        if ResultCode <> 0 then
+        if not IsInteractiveInPLU() then
         begin
-          Log('Failed to run PowerShell session : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
+          Log('Launching ''net'' elevated to add user (' + LocINTUserName + ') to the group (' + LocPLUGroupName + ').');
+          ShellExec('RunAs', 'net', 'localgroup "' + LocPLUGroupName + '" "' + LocINTUserName + '" /add', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
+
+          Sleep(500);
+
+          if ResultCode <> 0 then
+          begin
+            Log('Failed to add  : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
+          end;      
         end;
 
         ResultCode   := 0;
@@ -694,6 +746,8 @@ Type: files;          Name: "{app}\unins00*"
 Type: files;          Name: "{app}\Servlet\unins00*"
 Type: files;          Name: "{app}\Servlet\driver_install.bat"
 Type: files;          Name: "{app}\Servlet\driver_uninstall.bat"
+Type: files;          Name: "{app}\Servlet\driver_install.ps1"
+Type: files;          Name: "{app}\Servlet\driver_uninstall.ps1"
 Type: files;          Name: "{app}\Servlet\disable_logon.bat"
 Type: files;          Name: "{app}\Servlet\enable_logon.bat"
 Type: files;          Name: "{app}\Servlet\task_eject.bat"
@@ -712,7 +766,6 @@ Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\SKIF.ex
 ; This can result in a substantial delay if a number of other files are listed above the specified file in the [Files] section.
 
 ; Temporary files that are extracted as needed
-Source: "{#RedistDir}\Add-PerformanceLogMember.ps1"; DestDir: {tmp};            Flags: dontcopy;              
 Source: "{#RedistDir}\Unregister-AppInitDLLs.ps1";   DestDir: {tmp};            Flags: dontcopy;
 Source: "{#AssetsDir}\techno_stargazev2.1loop.mp3";  DestDir: {tmp};            Flags: dontcopy;
 
