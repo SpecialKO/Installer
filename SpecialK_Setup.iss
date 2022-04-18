@@ -168,7 +168,8 @@ begin
       Result := IsMember;
     end;
 
-  except
+  except 
+    Log('Catastrophic error in IsInteractiveInPLU()!');
     // Surpresses exception when an issue prevents proper lookup
   end;
 end;
@@ -191,7 +192,8 @@ begin
     Dependency_ForceX86 := True;
     Dependency_AddVC2015To2022;
     Dependency_ForceX86 := False;
-  except
+  except 
+    Log('Catastrophic error in InitializeSetup() for 32-bit Visual C++ 2015-2022 Redistributable!');
     // Surpresses exception when an issue prevents proper lookup
   end;
       
@@ -201,7 +203,8 @@ begin
     try
       Log('+ 64-bit Visual C++ 2015-2022 Redistributable');
       Dependency_AddVC2015To2022;
-    except
+    except 
+      Log('Catastrophic error in InitializeSetup() for 64-bit Visual C++ 2015-2022 Redistributable!');
       // Surpresses exception when an issue prevents proper lookup
     end;
   end;
@@ -243,7 +246,8 @@ begin
   // From: https://stackoverflow.com/questions/64060208/inno-setup-window-preview-in-taskbar
   // 
   // Technically wrong: "You must not call SetWindowLong with the GWL_HWNDPARENT index to change the parent of a child window.
-  //                     Instead, use the SetParent function."
+  //                     Instead, use the SetParent function." 
+  Log('Fixing the no taskbar preview bug of Inno Setup.');
   SetWindowLong(WizardForm.Handle, -8, GetWindowLong(GetWindow(WizardForm.Handle, 4), -8));
 
   // Have the disk spacel label appear here instead of later
@@ -359,7 +363,8 @@ begin
       Result := true;
     end;
 
-  except
+  except 
+    Log('Catastrophic error in IsGlobalInjectorOrSKIFRunning()!');
     // Surpresses exception when an issue prevents proper lookup
   end;
 end;
@@ -378,7 +383,8 @@ begin
       Result := true;
     end;
 
-  except
+  except 
+    Log('Catastrophic error in IsSKIFRunning()!');
     // Surpresses exception when an issue prevents proper lookup
   end;
 end;
@@ -387,7 +393,8 @@ function StopSKIF(): Integer;
 begin
   try
     Exec('taskkill.exe', '/F /IM SKIF.exe', '', SW_HIDE, ewNoWait, Result);
-  except
+  except 
+    Log('Catastrophic error in StopSKIF()!');
     // Surpresses exception when an issue prevents proper lookup
   end;
 end;
@@ -411,7 +418,8 @@ begin
         Result := true;
       end;
     end;
-  except
+  except 
+    Log('Catastrophic error in IsOneDriveRunning()!');
     // Surpresses exception when an issue prevents proper lookup
   end;
 end;
@@ -421,7 +429,8 @@ begin
   try
     Exec('taskkill.exe', '/F /IM OneDrive.exe', '', SW_HIDE, ewNoWait, Result);
     OneDriveStopped := True;
-  except
+  except 
+    Log('Catastrophic error in StopOneDrive()!');
     // Surpresses exception when an issue prevents proper lookup
   end;
 end;
@@ -449,6 +458,7 @@ begin
   ResultCode   := 0;
 
   try 
+    Log('Establishing WMI connection...'); 
     WbemLocator   := CreateOleObject('WbemScripting.SWbemLocator');
     WbemServices  := WbemLocator.ConnectServer('localhost', 'root\CIMV2');
 
@@ -459,15 +469,18 @@ begin
     Wizardform.BackButton.Visible := False;
     Wizardform.BackButton.Enabled := False;
 
-    // Determine if OneDrive is running and if so prompt user about closing it
+    // Determine if OneDrive is running and if so prompt user about closing it 
+    Log('Checking if OneDrive is used for the Documents folder...');
 
     if (Pos('OneDrive', ExpandConstant('{app}')) > 0) and (IsOneDriveRunning()) then
     begin 
+      Log('Prompting the user about OneDrive...'); 
       WizardForm.PreparingLabel.Caption := 'Prompting user about OneDrive...';
 
       // If installer is running silently, assume Yes
       if WizardSilent() then
-      begin
+      begin 
+        Log('Silent install detected, assuming YES.');
         StopOneDrive();
       end
       else
@@ -494,6 +507,7 @@ begin
 
         if not IsInteractiveInPLU() then
         begin
+          WizardForm.PreparingLabel.Caption := 'Attempting to grant membership in the local ''Performance Log Users'' group...';
           Log('Launching ''net'' elevated to add user (' + LocINTUserName + ') to the group (' + LocPLUGroupName + ').');
           ShellExec('RunAs', 'net', 'localgroup "' + LocPLUGroupName + '" "' + LocINTUserName + '" /add', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
 
@@ -501,7 +515,7 @@ begin
 
           if ResultCode <> 0 then
           begin
-            Log('Failed to add  : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
+            Log('Failed to grant permission : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
           end;      
         end;
 
@@ -598,7 +612,10 @@ begin
       end;
     
     end;
-
+  
+  except 
+    Log('Catastrophic error in PrepareToInstall()!');
+    // Surpresses exception when task does not exist or another issue prevents proper lookup
   finally
     WizardForm.PreparingLabel.Visible := WasVisible;
   end;
@@ -624,7 +641,8 @@ begin
     WbemLocator .Release();
     WbemServices.Release();
 
-  except
+  except 
+    Log('Catastrophic error in IsKernelDriverInstalled()!');
     // Surpresses exception when an issue prevents proper lookup
   end;
 end;
@@ -646,7 +664,8 @@ begin
     begin        
       Result := true;
     end;
-  except
+  except 
+    Log('Catastrophic error in IsSKIFAutoStartEnabled()!');
     // Surpresses exception when task does not exist or another issue prevents proper lookup
   end;
 end;
