@@ -356,7 +356,7 @@ var
     
 begin
   try
-    WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIFsvc.exe" OR Name = "SKIF.exe" OR Name = "rundll32.exe") AND (CommandLine LIKE "%SpecialK%" OR ExecutablePath LIKE "%SpecialK%")');
+    WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIFsvc.exe" OR Name = "SKIFsvc32.exe" OR Name = "SKIFsvc64.exe" OR Name = "SKIF.exe") OR ((Name = "rundll32.exe") AND (CommandLine LIKE "%SpecialK%" OR ExecutablePath LIKE "%SpecialK%"))');
 
     if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
     begin      
@@ -796,11 +796,13 @@ Source: "{#SourceDir}\SpecialK32.pdb";               DestDir: "{app}";          
 Source: "{#SourceDir}\SpecialK64.dll";               DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64;
 Source: "{#SourceDir}\SpecialK64.pdb";               DestDir: "{app}";          Flags: ignoreversion skipifsourcedoesntexist;    Check: IsWin64;
 Source: "{#SourceDir}\Servlet\SKIFsvc64.exe";        DestDir: "{app}\Servlet";  Flags: ignoreversion;                            Check: IsWin64;
-Source: "{#SourceDir}\Servlet\*";                    DestDir: "{app}\Servlet";  Flags: ignoreversion;  Excludes: "SKIFsvc64.exe" 
+Source: "{#SourceDir}\Servlet\*";                    DestDir: "{app}\Servlet";  Flags: ignoreversion;  Excludes: "SKIFsvc64.exe"  
+Source: "{#SourceDir}\SpecialK32-AVX2.dll";          DestDir: "{app}";          Flags: ignoreversion;
+Source: "{#SourceDir}\SpecialK64-AVX2.dll";          DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64; 
 
 ; Remaining files should only be created if they do not exist already.
 ; NOTE: This line causes the files included above to be counted twice in DiskSpaceMBLabel
-Source: "{#SourceDir}\*";                            DestDir: "{app}";          Flags: onlyifdoesntexist recursesubdirs createallsubdirs;  Excludes: "SKIF.exe,SKIF32.exe,\SpecialK32.dll,\SpecialK32.pdb,\SpecialK64.dll,\SpecialK64.pdb,\Servlet" 
+Source: "{#SourceDir}\*";                            DestDir: "{app}";          Flags: onlyifdoesntexist recursesubdirs createallsubdirs;  Excludes: "SKIF.exe,SKIF32.exe,\SpecialK32.dll,\SpecialK32.pdb,\SpecialK64.dll,\SpecialK64.pdb,\Servlet,\SpecialK32-AVX2.dll,\SpecialK64-AVX2.dll" 
 
 [Dirs]
 Name: "{app}\Profiles"
