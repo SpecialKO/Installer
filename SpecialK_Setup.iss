@@ -6,8 +6,8 @@
 #define SpecialKPublisher "The Special K Group"
 #define SpecialKURL       "https://special-k.info/"
 #define SpecialKHelpURL   "https://wiki.special-k.info/"
-#define SpecialKExeName   "SKIF.exe"
-#define SourceDir         "Source"                        ; Keeps the files and folder structure of Documents\My Mods\SpecialK as intended post-install
+#define SpecialKExeName   "SKIF.exe"                                                                                 
+#define SourceDir         "Source"                        ; Keeps the files and folder structure of the install folder as intended post-install
 #define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts   
 #define OutputDir         "Builds"                        ; Output folder to put compiled builds of the installer   
 #define AssetsDir         "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
@@ -36,13 +36,15 @@ AppCopyright                       = Copyleft 🄯 2015-2022
 VersionInfoVersion                 = {#SpecialKVersion}
 VersionInfoOriginalFileName        = SpecialK_{#SpecialKVersion}.exe
 VersionInfoCompany                 = {#SpecialKPublisher}
-DefaultDirName                     = {userdocs}\My Mods\SpecialK
-DisableDirPage                     = yes
+;old: {userdocs}\My Mods\SpecialK
+DefaultDirName                     = {autopf}\Special K
+UsePreviousAppDir                  = yes
+DisableDirPage                     = no
 DefaultGroupName                   = {#SpecialKName}
 DisableProgramGroupPage            = yes
 LicenseFile                        = {#AssetsDir}\LICENSE.txt
 PrivilegesRequired                 = lowest
-PrivilegesRequiredOverridesAllowed = commandline
+PrivilegesRequiredOverridesAllowed = commandline dialog
 OutputDir                          = {#OutputDir}
 OutputBaseFilename                 = SpecialK_{#SpecialKVersion}
 SetupIconFile                      = {#AssetsDir}\icon.ico
@@ -57,6 +59,7 @@ CloseApplications                  = yes
 DisableWelcomePage                 = no
 SetupLogging                       = yes
 
+
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
@@ -66,7 +69,7 @@ SetupAppTitle    ={#SpecialKName} Setup
 SetupWindowTitle ={#SpecialKName} v {#SpecialKVersion}
 UninstallAppTitle={#SpecialKName} Uninstall
 WelcomeLabel2    =This will install {#SpecialKName} v {#SpecialKVersion} on your computer.%n%nLovingly referred to as the Swiss Army Knife of PC gaming, Special K does a bit of everything. It is best known for fixing and enhancing graphics, its many detailed performance analysis and correction mods, and a constantly growing palette of tools that solve a wide variety of issues affecting PC games.%n%nIt is recommended that you close all other applications before continuing.
-ConfirmUninstall =Are you sure you want to completely remove %1 and all of its components?%n%nThis will also remove any Special K game data (configs, texture packs) stored in Documents\My Mods\SpecialK\Profiles.  
+ConfirmUninstall =Are you sure you want to completely remove %1 and all of its components?%n%nThis will also remove any Special K game data (screenshots, texture packs, configs) stored in the Profiles subfolder.  
 DiskSpaceMBLabel =
 
 [Code]
@@ -169,7 +172,7 @@ begin
     end;
 
   except 
-    Log('Catastrophic error in IsInteractiveInPLU()!');
+    Log('Catastrophic error in IsInteractiveInPLU() !');
     // Surpresses exception when an issue prevents proper lookup
   end;
 end;
@@ -330,19 +333,19 @@ begin
     Wizardform.ReadyMemo.Lines.Add('      Special K                           v {#SpecialKVersion}');
     Wizardform.ReadyMemo.Lines.Add('      Special K Injection Frontend (SKIF) v {#SKIFVersion}');
     Wizardform.ReadyMemo.Lines.Add('');
-    Wizardform.ReadyMemo.Lines.Add('Destination location:');
-    Wizardform.ReadyMemo.Lines.Add(ExpandConstant('      {app}'));
-    Wizardform.ReadyMemo.Lines.Add('');
+    //Wizardform.ReadyMemo.Lines.Add('Destination location:');
+    //Wizardform.ReadyMemo.Lines.Add(ExpandConstant('      {app}'));
+    //Wizardform.ReadyMemo.Lines.Add('');
 
-    if SwitchHasValue('Shortcuts', 'true', 'true') then
-    begin
-      Wizardform.ReadyMemo.Lines.Add('Shortcuts:');
-      Wizardform.ReadyMemo.Lines.Add('      Desktop');
-      Wizardform.ReadyMemo.Lines.Add('      Start menu');
-      Wizardform.ReadyMemo.Lines.Add('');
-    end;
+    //if SwitchHasValue('Shortcuts', 'true', 'true') then
+    //begin
+    //  Wizardform.ReadyMemo.Lines.Add('Shortcuts:');
+    //  Wizardform.ReadyMemo.Lines.Add('      Desktop');
+    //  Wizardform.ReadyMemo.Lines.Add('      Start menu');
+    //  Wizardform.ReadyMemo.Lines.Add('');
+    //end;
 
-    // And finally if there is any additional tasks from CodeDependencies.iss, add them back.
+    // And finally if there is any additional tasks from Inno Setup or CodeDependencies.iss, add them back.
     Wizardform.ReadyMemo.Lines.Add(AdditionalTasks); 
 
     Wizardform.ReadyMemo.Show;
@@ -637,12 +640,9 @@ begin
     begin       
       Result := true;
     end;
-    
-    WbemLocator .Release();
-    WbemServices.Release();
 
   except 
-    Log('Catastrophic error in IsKernelDriverInstalled()!');
+    Log('Catastrophic error in IsKernelDriverInstalled() !');
     // Surpresses exception when an issue prevents proper lookup
   end;
 end;
@@ -650,22 +650,32 @@ end;
 
 function IsSKIFAutoStartEnabled(): Boolean;
 var
-  TaskService: Variant;
-  Folder: Variant;
-  Task: Variant;
+  TaskService:    Variant;
+  RootFolder:     Variant;
+  TaskCollection: Variant;
+  I:              Integer;
 begin
   try
     TaskService := CreateOleObject('Schedule.Service');
     TaskService.Connect();
-    Folder      := TaskService.GetFolder('\');
-    Task        := Folder.GetTask('SK_InjectLogon');
 
-    if not VarIsNull(Task) and (Task.Name = 'SK_InjectLogon') then
-    begin        
-      Result := true;
+    if TaskService.Connected then
+    begin
+      RootFolder     := TaskService.GetFolder('\');
+      TaskCollection :=  RootFolder.GetTasks(0);
+      if not VarIsNull(TaskCollection) and (TaskCollection.Count > 0) then
+      begin
+        for I := 1 to TaskCollection.Count - 1 do // Item enumeration starts at 1 apparently
+        begin
+          if not VarIsNull(TaskCollection.Item(I)) and (TaskCollection.Item(I).Name = 'SK_InjectLogon') then
+          begin
+            Result := true;
+          end; 
+        end;
+      end;
     end;
   except 
-    Log('Catastrophic error in IsSKIFAutoStartEnabled()!');
+    Log('Catastrophic error in IsSKIFAutoStartEnabled() !');
     // Surpresses exception when task does not exist or another issue prevents proper lookup
   end;
 end;
@@ -771,11 +781,13 @@ Type: files;          Name: "{app}\Servlet\disable_logon.bat"
 Type: files;          Name: "{app}\Servlet\enable_logon.bat"
 Type: files;          Name: "{app}\Servlet\task_eject.bat"
 
+
 [Registry]
 Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K 32-bit Global Injection Service Host";             Flags: uninsdeletevalue
 Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K 64-bit Global Injection Service Host";             Flags: uninsdeletevalue
 Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K";                                                  Flags: uninsdeletevalue
 Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\SKIF.exe"; ValueType: string; ValueData: "{app}\{#SpecialKExeName}"; Flags: uninsdeletekey
+
 
 [Files]
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
@@ -804,20 +816,27 @@ Source: "{#SourceDir}\SpecialK64-AVX2.dll";          DestDir: "{app}";          
 ; NOTE: This line causes the files included above to be counted twice in DiskSpaceMBLabel
 Source: "{#SourceDir}\*";                            DestDir: "{app}";          Flags: onlyifdoesntexist recursesubdirs createallsubdirs;  Excludes: "SKIF.exe,SKIF32.exe,\SpecialK32.dll,\SpecialK32.pdb,\SpecialK64.dll,\SpecialK64.pdb,\Servlet,\SpecialK32-AVX2.dll,\SpecialK64-AVX2.dll" 
 
+
 [Dirs]
+Name:  {app}; Permissions: users-modify
 Name: "{app}\Profiles"
 
 
+[Tasks]
+Name: desktopicon;   Description: "Create &desktop shortcut";    
+Name: startmenu;     Description: "Create start menu shortcut";
+
+
 [Icons]
-Name: "{userprograms}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');
-Name:  "{autodesktop}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');
+Name: "{autoprograms}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: startmenu
+Name:  "{autodesktop}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: desktopicon
 
 
 [Run]
 ; Checked by default
 
 Filename: "{app}\{#SpecialKExeName}";               Description: "{cm:LaunchProgram,{#StringChange(SpecialKName, '&', '&&')}}"; \
-  Flags: nowait postinstall
+  Flags: nowait postinstall runasoriginaluser
 
 Filename: "https://wiki.special-k.info/";           Description: "Open the wiki"; \
   Flags: shellexec nowait postinstall skipifsilent
@@ -838,6 +857,7 @@ Filename: "https://www.patreon.com/Kaldaien";       Description: "Support the pr
 Filename: "{code:GetOneDrivePath}";                 Description: "Start OneDrive";    Parameters: "/background"; \
   Flags: nowait;      Check: RestartOneDrive;
 
+
 [UninstallDelete]
 Type: files;          Name: "{userprograms}\Startup\SKIM64.lnk"
 Type: files;          Name: "{userprograms}\Startup\SKIF.lnk"
@@ -847,6 +867,7 @@ Type: files;          Name: "{app}\SpecialK32.old"
 Type: files;          Name: "{app}\SpecialK64.old" 
 Type: filesandordirs; Name: "{app}\Drivers\Dbghelp" 
 Type: filesandordirs; Name: "{app}\Drivers\WinRing0"
+Type: filesandordirs; Name: "{app}\Assets"
 Type: filesandordirs; Name: "{app}\Profiles"
 Type: filesandordirs; Name: "{app}\Global"
 Type: filesandordirs; Name: "{app}\CEGUI"
@@ -858,6 +879,7 @@ Type: filesandordirs; Name: "{app}\Servlet"
 Type: filesandordirs; Name: "{app}\Version"
 Type: filesandordirs; Name: "{app}\imgui.ini"
 Type: filesandordirs; Name: "{app}\SKIF.ini"
+Type: filesandordirs; Name: "{app}\SKIF.log"
 Type: filesandordirs; Name: "{app}\patrons.txt"
 Type: dirifempty;     Name: "{app}"  
 Type: dirifempty;     Name: "{userdocs}\My Mods"
