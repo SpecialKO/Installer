@@ -50,6 +50,7 @@ OutputBaseFilename                 = SpecialK_{#SpecialKVersion}
 SetupIconFile                      = {#AssetsDir}\icon.ico
 Compression                        = lzma2/ultra64
 SolidCompression                   = yes
+LZMAUseSeparateProcess             = yes
 WizardStyle                        = modern
 WizardSmallImageFile               = {#AssetsDir}\WizardSmallImageFile.bmp
 WizardImageFile                    = {#AssetsDir}\WizardImageFile.bmp
@@ -830,6 +831,7 @@ Name: startmenu;     Description: "Create start menu shortcut";
 [Icons]
 Name: "{autoprograms}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: startmenu
 Name:  "{autodesktop}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: desktopicon
+Name:     "{userdocs}\My Mods\Special K";  Filename: "{app}";
 
 
 [Run]
