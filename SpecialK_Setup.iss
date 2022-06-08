@@ -770,6 +770,8 @@ Type: files;          Name: "{userprograms}\Startup\SKIM64.lnk"
 Type: files;          Name: "{userprograms}\Startup\SKIF.lnk"
 Type: files;          Name: "{userprograms}\Startup\SKIFsvc32.lnk"
 Type: files;          Name: "{userprograms}\Startup\SKIFsvc64.lnk"
+Type: files;          Name: "{app}\SpecialK32-AVX2.dll"
+Type: files;          Name: "{app}\SpecialK64-AVX2.dll"
 Type: files;          Name: "{app}\SpecialK32.pdb"
 Type: files;          Name: "{app}\SpecialK64.pdb"
 Type: files;          Name: "{app}\unins00*"
@@ -810,8 +812,8 @@ Source: "{#SourceDir}\SpecialK64.dll";               DestDir: "{app}";          
 Source: "{#SourceDir}\SpecialK64.pdb";               DestDir: "{app}";          Flags: ignoreversion skipifsourcedoesntexist;    Check: IsWin64;
 Source: "{#SourceDir}\Servlet\SKIFsvc64.exe";        DestDir: "{app}\Servlet";  Flags: ignoreversion;                            Check: IsWin64;
 Source: "{#SourceDir}\Servlet\*";                    DestDir: "{app}\Servlet";  Flags: ignoreversion;  Excludes: "SKIFsvc64.exe"  
-Source: "{#SourceDir}\SpecialK32-AVX2.dll";          DestDir: "{app}";          Flags: ignoreversion;
-Source: "{#SourceDir}\SpecialK64-AVX2.dll";          DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64; 
+;Source: "{#SourceDir}\SpecialK32-AVX2.dll";          DestDir: "{app}";          Flags: ignoreversion;
+;Source: "{#SourceDir}\SpecialK64-AVX2.dll";          DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64; 
 
 ; Remaining files should only be created if they do not exist already.
 ; NOTE: This line causes the files included above to be counted twice in DiskSpaceMBLabel
