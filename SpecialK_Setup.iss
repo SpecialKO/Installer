@@ -786,10 +786,11 @@ Type: files;          Name: "{app}\Servlet\task_eject.bat"
 
 
 [Registry]
-Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K 32-bit Global Injection Service Host";             Flags: uninsdeletevalue
-Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K 64-bit Global Injection Service Host";             Flags: uninsdeletevalue
-Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K";                                                  Flags: uninsdeletevalue
-Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\SKIF.exe"; ValueType: string; ValueData: "{app}\{#SpecialKExeName}"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K 32-bit Global Injection Service Host";                 Flags: uninsdeletevalue
+Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K 64-bit Global Injection Service Host";                 Flags: uninsdeletevalue
+Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K";                                                      Flags: uninsdeletevalue
+Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\SKIF.exe";     ValueType: string; ValueData: "{app}\{#SpecialKExeName}"; Flags: uninsdeletekey   createvalueifdoesntexist
+Root: HKCU; Subkey: "SOFTWARE\Kaldaien\Special K";                   ValueName: "Path"; ValueType: string; ValueData: "{app}";                    Flags: uninsdeletevalue createvalueifdoesntexist
 
 
 [Files]
