@@ -4,6 +4,9 @@
 ; Visual C++ or SQL Server during your application's installation process.
 ;
 ; contribute: https://github.com/DomGries/InnoDependencyInstaller
+;
+; licensed under The Code Project Open License (CPOL) 1.02
+; https://github.com/DomGries/InnoDependencyInstaller/blob/master/LICENSE.md
 
 
 ; -----------
