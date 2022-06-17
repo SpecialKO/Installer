@@ -453,6 +453,7 @@ var
   AppInitDLLs32Pos : Integer;
   AppInitDLLs64    : String;
   AppInitDLLs64Pos : Integer;
+  OldDLLsEnding    : String;
 
 begin 
   Log('Preparing Install.');
@@ -601,17 +602,19 @@ begin
 
         WizardForm.PreparingLabel.Caption := 'Performing final preparations...';
 
-        DeleteFile(ExpandConstant('{app}\SpecialK32.old'));
-        DeleteFile(ExpandConstant('{app}\SpecialK64.old'));
+        //DeleteFile(ExpandConstant('{app}\SpecialK32.old'));
+        //DeleteFile(ExpandConstant('{app}\SpecialK64.old'));
+
+        OldDLLsEnding := '_' + GetDateTimeString('yyyymmdd_hhnn', #0, #0) + '.old';
 
         if not DeleteFile(ExpandConstant('{app}\SpecialK32.dll')) then
         begin
-          RenameFile(ExpandConstant('{app}\SpecialK32.dll'), ExpandConstant('{app}\SpecialK32.old'));
+          RenameFile(ExpandConstant('{app}\SpecialK32.dll'), ExpandConstant('{app}\SpecialK32') + OldDLLsEnding);
         end;
 
         if not DeleteFile(ExpandConstant('{app}\SpecialK64.dll')) then
         begin
-          RenameFile(ExpandConstant('{app}\SpecialK64.dll'), ExpandConstant('{app}\SpecialK64.old'));
+          RenameFile(ExpandConstant('{app}\SpecialK64.dll'), ExpandConstant('{app}\SpecialK64') + OldDLLsEnding);
         end;
       end;
     
