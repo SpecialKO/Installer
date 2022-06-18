@@ -5,7 +5,7 @@ This is the Inno Setup Script (.iss) and assets used to compile the Special K in
 
 The packaged Special K installer can be downloaded from https://special-k.info/
 
-## Third-party stuff
+## Third-party code
 
 * Features the music track [Stargazer](https://opengameart.org/content/stargazer) by [Centurion_of_war](https://opengameart.org/users/centurionofwar), licensed under [CC0 1.0 Universal (CC0 1.0) Public Domain Dedication](https://creativecommons.org/publicdomain/zero/1.0/).
 
