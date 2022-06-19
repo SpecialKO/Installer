@@ -36,8 +36,8 @@ AppCopyright                       = Copyleft 🄯 2015-2022
 VersionInfoVersion                 = {#SpecialKVersion}
 VersionInfoOriginalFileName        = SpecialK_{#SpecialKVersion}.exe
 VersionInfoCompany                 = {#SpecialKPublisher}
-;old: {userdocs}\My Mods\SpecialK
 DefaultDirName                     = {autopf}\Special K
+;DefaultDirName                    = {userdocs}\My Mods\SpecialK
 UsePreviousAppDir                  = yes
 DisableDirPage                     = no
 DefaultGroupName                   = {#SpecialKName}
@@ -247,8 +247,10 @@ begin
   Log('Initializing Wizard.');
 
   // Fixes Inno Setup no taskbar preview
-  // From: https://stackoverflow.com/questions/64060208/inno-setup-window-preview-in-taskbar
-  // 
+  // From StackOverflow: https://stackoverflow.com/a/64162597/15133327
+  // Created by: https://stackoverflow.com/users/709507/inside-man
+  // Licensed under CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/
+  //
   // Technically wrong: "You must not call SetWindowLong with the GWL_HWNDPARENT index to change the parent of a child window.
   //                     Instead, use the SetParent function." 
   Log('Fixing the no taskbar preview bug of Inno Setup.');
@@ -684,6 +686,31 @@ begin
   end;
 end;
 
+(* This block is disabled as it does not really work as expected as the native confirm uninstall
+   prompt cannot be disabled so enabling this would just end up showing two prompts after one another.
+
+   See https://stackoverflow.com/questions/37023764/replace-or-customize-modal-uninstallation-windows-in-inno-setup
+
+function InitializeUninstall(): Boolean;
+var
+  PromptMessage: String;
+begin
+  Result := True;
+
+  PromptMessage := 'Are you sure you want to completely remove Special K and all of its components from the following folder?';
+  PromptMessage := PromptMessage + #13#10#13#10;
+  PromptMessage := PromptMessage + ExpandConstant('{app}');
+  PromptMessage := PromptMessage + #13#10#13#10;
+  PromptMessage := PromptMessage + 'This will also remove any Special K game data (screenshots, texture packs, configs) stored in the Profiles subfolder.'; 
+
+  case MsgBox(PromptMessage, mbConfirmation, MB_YESNO) of
+    IDYES:
+      Result := True;
+    IDNO:
+      Result := False;
+  end;
+end;
+*)
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
