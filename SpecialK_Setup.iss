@@ -852,7 +852,7 @@ Source: "{#SourceDir}\*";                            DestDir: "{app}";          
 
 
 [Dirs]
-Name:  {app}; Permissions: users-modify
+Name: "{app}";          Permissions: users-modify
 Name: "{app}\Profiles"
 
 
