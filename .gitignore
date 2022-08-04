@@ -37,3 +37,6 @@ packages/
 Builds/
 Source/SpecialK*.dll
 /Assets/techno_stargazev2.1loop_uncompressed.mp3
+/SpecialK-test.7z
+steam_api.dll
+steam_api64.dll
