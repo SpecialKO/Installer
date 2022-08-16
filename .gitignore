@@ -40,3 +40,5 @@ Source/SpecialK*.dll
 /SpecialK-test.7z
 steam_api.dll
 steam_api64.dll
+steam_api_sk.dll
+steam_api_sk64.dll
