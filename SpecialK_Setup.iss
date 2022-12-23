@@ -6,6 +6,9 @@
 #define SpecialKPublisher "The Special K Group"
 #define SpecialKURL       "https://special-k.info/"
 #define SpecialKHelpURL   "https://wiki.special-k.info/"
+#define SpecialKForum     "https://discourse.differentk.fyi/"
+#define SpecialKDiscord   "https://discord.gg/specialk"
+#define SpecialKPatreon   "https://www.patreon.com/Kaldaien"
 #define SpecialKExeName   "SKIF.exe"                                                                                 
 #define SourceDir         "Source"                        ; Keeps the files and folder structure of the install folder as intended post-install
 #define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts   
@@ -353,7 +356,7 @@ begin
 
     Wizardform.ReadyMemo.Show;
   end;
-end;                  
+end;
 
 
 function IsGlobalInjectorOrSKIFRunning(): Boolean;
@@ -873,18 +876,18 @@ Name:     "{userdocs}\My Mods\Special K";  Filename: "{app}";
 Filename: "{app}\{#SpecialKExeName}";               Description: "{cm:LaunchProgram,{#StringChange(SpecialKName, '&', '&&')}}"; \
   Flags: nowait postinstall runasoriginaluser
 
-Filename: "https://wiki.special-k.info/";           Description: "Open the wiki"; \
+Filename: "{#SpecialKHelpURL}";                     Description: "Open the wiki"; \
   Flags: shellexec nowait postinstall skipifsilent
 
 ; Unchecked by default
 
-Filename: "https://discord.com/invite/ER4EDBJPTa";  Description: "Join the Discord server"; \
+Filename: "{#SpecialKDiscord}";                     Description: "Join the Discord server"; \
   Flags: shellexec nowait postinstall skipifsilent unchecked
 
-Filename: "https://discourse.differentk.fyi/";      Description: "Visit the forum"; \
+Filename: "{#SpecialKForum}";                       Description: "Visit the forum"; \
   Flags: shellexec nowait postinstall skipifsilent unchecked
 
-Filename: "https://www.patreon.com/Kaldaien";       Description: "Support the project on Patreon"; \
+Filename: "{#SpecialKPatreon}";                     Description: "Support the project on Patreon"; \
   Flags: shellexec nowait postinstall skipifsilent unchecked
 
 ; Start up OneDrive again after installation has succeeded
