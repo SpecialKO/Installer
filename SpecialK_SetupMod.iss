@@ -3,8 +3,8 @@
 
 ;#define Replicant
 ;#define TBFix
-#define TVFix
-;#define UnX
+;#define TVFix
+#define UnX
 
 #define SpecialKName      "Special K"
 #define SpecialKPublisher "The Special K Group"
@@ -40,7 +40,7 @@
   #define SpecialKUninstID  "{{F6E4AA7A-0E71-48C1-96F4-7497FEBE2819}"
   #define SpecialKGameName  "Tales of Vesperia"
   #define SpecialKModName   "TVFix"
-  #define SpecialKVersion   GetFileVersion(SourceDir + '\dxgi.dll')
+  #define SpecialKVersion   GetVersionNumbersString(SourceDir + '\dxgi.dll')
   #define SpecialKHelpURL   "https://wiki.special-k.info/SpecialK/Custom/TVFix"
 
 #elif Defined UnX ; Final Fantasy X|X-2 HD Remaster
@@ -126,13 +126,15 @@ DiskSpaceMBLabel =
 var
   WbemLocator       : Variant;
   WbemServices      : Variant;
-  OneDriveStopped   : Boolean;
   MusicPlayback     : Boolean;
   ToggleMusicButton : TNewButton;
   CreditMusicButton : TNewButton;
-  OneDrivePath      : String;
   LocPLUGroupName   : String;
   LocINTUserName    : String;
+
+const
+  IMAGE_FILE_AGGRESIVE_WS_TRIM   = $0010;  // 0x10 (16) - Aggressively trim working set
+  IMAGE_FILE_LARGE_ADDRESS_AWARE = $0020;  // 0x20 (32) - App can handle >2gb addresses
 
 // If Inno Setup ever becomes native 64-bit, the below rows needs to be changed to SetWindowLongPtrW/GetWindowLongPtrW
 function SetWindowLong ( Wnd: HWND;  nIndex: Integer;  dwNewLong: Longint): Longint;  external 'SetWindowLongW@user32.dll stdcall';
@@ -143,12 +145,6 @@ function GetWindow     (hWnd: HWND;    uCmd: Cardinal)                    : HWND
 
 // Used to play background music during installation
 function mciSendString(lpstrCommand: String; lpstrReturnString: Integer; uReturnLength: Cardinal; hWndCallback: HWND): Cardinal; external 'mciSendStringW@winmm.dll stdcall';
-
-// Used to check for the presence of cmd line switches
-function SwitchHasValue(Name: string; Value: string; DefaultValue: string): Boolean;
-begin
-  Result := CompareText(ExpandConstant('{param:' + Name + '|' + DefaultValue + '}'), Value) = 0;
-end;
 
 
 // Parses Valve Data Format (.VDF and .ACF) files
@@ -256,12 +252,122 @@ begin
   end;
 end;
 
+function GetLastError: Cardinal;
+  external 'GetLastError@kernel32.dll stdcall';
+
+function BufferToAnsi(const Buffer: String): AnsiString;
+var
+  W: Word;
+  I: Integer;
+begin
+  SetLength(Result, Length(Buffer) * 2);
+  for I := 1 to Length(Buffer) do
+  begin
+    W := Ord(Buffer[I]);
+    Result[(I * 2)]     := Chr(W shr 8); // high byte
+    Result[(I * 2) - 1] := Chr(Byte(W)); // low byte
+  end;
+end;
+
+function MakeExecutableLAAware(FileName: String): Boolean;
+var
+  Stream:    TFileStream;
+  Buffer:    String;
+  BufferH:   String;
+  AnsiStr:   AnsiString;
+  HeaderPos: Longint;
+  Error:     Cardinal;
+  Flag:      Integer;
+begin
+
+  try
+    Log(Format('Checking LAA on %s', [FileName]));
+
+    Stream := TFileStream.Create(FileName, fmOpenReadWrite or fmShareDenyWrite);
+    SetLength(Buffer,  1);
+    SetLength(BufferH, 2);
+
+    Stream.Seek(0, soFromBeginning);
+    Stream.ReadBuffer(Buffer, 1);
+    AnsiStr := BufferToAnsi(Buffer);
+    //Log(Format('Byte 01: %2.2x (%s)', [Ord(AnsiStr[1]), AnsiStr[1]]));
+
+    if AnsiStr[1] = #$4D then // M
+    begin
+      Stream.ReadBuffer(Buffer, 1);
+      AnsiStr := BufferToAnsi(Buffer);
+
+      if AnsiStr[1] = #$5A then // Z
+      begin
+
+        // Look up the offset for the PE header 
+        Stream.Seek(60, soFromBeginning);
+        Stream.ReadBuffer(BufferH, 2);
+        HeaderPos := Ord(BufferH[1]);
+        Log(Format('PE header offset: %d (dec), %x (hex)', [HeaderPos, HeaderPos]));
+
+        Stream.Seek(HeaderPos, soFromBeginning);
+        Stream.ReadBuffer(Buffer, 1);
+        AnsiStr := BufferToAnsi(Buffer);
+
+        if AnsiStr[1] = #$50 then // P(ortable)
+        begin
+          Stream.ReadBuffer(Buffer, 1);
+          AnsiStr := BufferToAnsi(Buffer);
+
+          if AnsiStr[1] = #$45 then // E(xecutable)
+          begin
+            Stream.Seek(20, soFromCurrent); // 
+            Stream.ReadBuffer(Buffer, 1);
+            AnsiStr := BufferToAnsi(Buffer);
+
+            Flag := Ord(AnsiStr[1]);
+            Log(Format('Got flag: %d', [Flag]));
+
+            if (Flag and IMAGE_FILE_LARGE_ADDRESS_AWARE) = IMAGE_FILE_LARGE_ADDRESS_AWARE then
+            begin // LAAware
+              Log('Executable is LAAware, nothing to do.');
+              Result := True;
+            end
+            else // LAUnaware
+            begin
+              Log('Executable is LAUnware, patching...');
+              if FileCopy(FileName, ChangeFileExt(FileName, '_LAUnaware.bak'), False) then
+              begin
+                Stream.Seek(-1, soFromCurrent); // Move the cursor back one step
+
+                Flag := (Flag or IMAGE_FILE_LARGE_ADDRESS_AWARE);
+                Log(Format('New flag: %d', [Flag]));
+
+                Stream.WriteBuffer(Chr(Flag), 1); // IntToStr() results in incorrect data being written, but Chr() writes the right one
+                Log('Executable was patched successfully!');
+                Result := True;
+              end
+              else
+              begin
+                Error := GetLastError;
+                Log(Format('Copying "%s" to "%s" failed with code %d (0x%x) - %s', [
+                    FileName, FileName + '_LAUnaware.bak', Error, Error, SysErrorMessage(Error)]));
+              end;
+            end;
+          end;
+        end;
+      end;
+    end;
+  except
+    Error := GetLastError;
+    Log(Format('Operating on "%s" failed with code %d (0x%x) - %s', [
+        FileName, Error, Error, SysErrorMessage(Error)]));
+  finally
+    Stream.Free;
+  end;
+end;
+
 
 // This is called from [Setup] section to dynamically set the default installation folder
 function GetSteamInstallFolder(AppID: String): String;
 var
   I:                Integer;
-  P:                Integer;
   Libraries:        TArrayOfString;
   Library:          String;
   SteamInstallPath: String;
@@ -285,8 +391,9 @@ begin
       end;
     end;
   end; 
+end;
 
-end;  
+  
 
 
 // Checks if the required permissions exists for PresentMon stats
@@ -368,8 +475,6 @@ end;
 
 // Dependency handler
 function InitializeSetup: Boolean;
-var
-    Paths: TArrayOfString;
 begin
   Log('Initializing Setup.');
 
@@ -579,6 +684,21 @@ begin
 
       ResultCode   := 0;
     end;
+
+#if Defined UnX
+    if not WizardSilent() then
+    begin
+      // Check if NT AUTHORITY\INTERACTIVE is in BUILTIN\Performance Log Users and if not, make it so
+      WizardForm.PreparingLabel.Caption := 'Making game executables Large Address Aware (LAA)...';
+      Log('Making game executables Large Address Aware (LAA).');
+
+      MakeExecutableLAAware(ExpandConstant('{app}\FFX.exe'));
+      MakeExecutableLAAware(ExpandConstant('{app}\FFX-2.exe'));
+      MakeExecutableLAAware(ExpandConstant('{app}\FFX&X-2_Will.exe'));
+
+      ResultCode   := 0;
+    end;    
+#endif
   
   except 
     Log('Catastrophic error in PrepareToInstall()!');
