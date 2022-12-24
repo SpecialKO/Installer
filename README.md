@@ -11,4 +11,4 @@ The packaged Special K installer can be downloaded from https://special-k.info/
 
 * Uses [Inno Setup Dependency Installer](https://github.com/DomGries/InnoDependencyInstaller), licensed under [The Code Project Open License (CPOL) 1.02](https://github.com/DomGries/InnoDependencyInstaller/blob/master/LICENSE.md).
 
-* Includes a [Inno Setup taskbar preview fix](https://stackoverflow.com/a/64162597/15133327) by the user [Inside Man](https://stackoverflow.com/users/709507/inside-man) from [Stack Overflow](https://stackoverflow.com/), licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+* Includes various snippets of code from [Stack Overflow](https://stackoverflow.com/), licensed under [Creative Commons Attribution-ShareAlike](https://stackoverflow.com/help/licensing).
