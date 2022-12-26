@@ -197,6 +197,7 @@ begin
             StringChange(LineValue, '\\', '\');
             //Log(Format('Found VDF value: %s', [LineValue]));
             Value := LineValue;
+            break;
           end;
         end;
       end;
