@@ -212,22 +212,37 @@ var
   Libraries:        TArrayOfString;
   Library:          String;
   SteamInstallPath: String;
+  SteamLibVDFPath:  String;
+  GameInstallPath:  String;
   GameInstallDir:   String;
 begin
-  SteamInstallPath := ExpandConstant('{reg:HKLM32\SOFTWARE\Valve\Steam,InstallPath|}');
+  SteamInstallPath := ExpandConstant('{reg:HKLM32\SOFTWARE\Valve\Steam,InstallPath|{commonpf32}\Steam}');
 
-  if Length(SteamInstallPath) > 0 then
+  if DirExists(SteamInstallPath) then
   begin
     Log(Format('Found Steam folder: %s', [SteamInstallPath]));
-    if GetVDFKeyValues(SteamInstallPath + '\config\libraryfolders.vdf', 'path', Libraries) then
+
+    if FileExists(SteamInstallPath + '\config\libraryfolders.vdf') then
+      SteamLibVDFPath := SteamInstallPath + '\config\libraryfolders.vdf'     // Modern location
+    else
+      SteamLibVDFPath := SteamInstallPath + '\steamapps\libraryfolders.vdf'; // Legacy location
+
+    if GetVDFKeyValues(SteamLibVDFPath, 'path', Libraries) then
     begin
       for I := 0 to GetArrayLength(Libraries) - 1 do
       begin
         Library := Libraries[I];
-        if FileExists(Library + '/steamapps/appmanifest_' + AppID + '.acf') and
-           GetVDFKeyValue(Library + '/steamapps/appmanifest_' + AppID + '.acf', 'installdir', GameInstallDir) then
+        GameInstallPath := Library + '\steamapps\common\';
+
+        if FileExists(Library + '\steamapps\appmanifest_' + AppID + '.acf') and
+           GetVDFKeyValue(Library + '\steamapps\appmanifest_' + AppID + '.acf', 'installdir', GameInstallDir) then
         begin
-          Result := Library + '/steamapps/common/' + GameInstallDir;
+          if DirExists(GameInstallPath + GameInstallDir) then
+          begin
+            Log(Format('Found game folder: %s', [GameInstallPath + GameInstallDir]));
+            Result := GameInstallPath + GameInstallDir;
+            break;
+          end;
         end;
       end;
     end;
