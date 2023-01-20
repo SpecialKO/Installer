@@ -477,7 +477,7 @@ var
     
 begin
   try
-    WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIFsvc.exe" OR Name = "SKIFsvc32.exe" OR Name = "SKIFsvc64.exe" OR Name = "SKIF.exe") OR ((Name = "rundll32.exe") AND (CommandLine LIKE "%SpecialK%" OR ExecutablePath LIKE "%SpecialK%"))');
+    WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIFsvc.exe" OR Name = "SKIFsvc32.exe" OR Name = "SKIFsvc64.exe" OR Name = "SKIF.exe") OR ((Name = "rundll32.exe") AND (CommandLine LIKE "%SpecialK%" OR CommandLine LIKE "%Special K%" OR ExecutablePath LIKE "%SpecialK%" OR ExecutablePath LIKE "%Special K%"))');
 
     if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
     begin      
@@ -625,7 +625,7 @@ begin
   try
     WbemLocator   := CreateOleObject('WbemScripting.SWbemLocator');
     WbemServices  := WbemLocator.ConnectServer('localhost', 'root\CIMV2');
-    WbemObjectSet := WbemServices.ExecQuery('SELECT PathName FROM Win32_SystemDriver WHERE Name = "WinRing0_1_2_0" AND PathName LIKE "%SpecialK%"');
+    WbemObjectSet := WbemServices.ExecQuery('SELECT PathName FROM Win32_SystemDriver WHERE Name = "WinRing0_1_2_0" AND (PathName LIKE "%SpecialK%" OR PathName LIKE "%Special K%")');
 
     if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
     begin       
