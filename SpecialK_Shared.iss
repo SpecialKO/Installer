@@ -474,10 +474,18 @@ end;
 function IsGlobalInjectorOrSKIFRunning(): Boolean;
 var
   WbemObjectSet : Variant;
+  InstallFolder : String;
     
 begin
+  InstallFolder := ExtractFileName(RemoveBackslashUnlessRoot(ExpandConstant('{app}')));
+
+  if Length(InstallFolder) = 0 then
+  begin
+    InstallFolder := 'SpecialK';
+  end; 
+
   try
-    WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIFsvc.exe" OR Name = "SKIFsvc32.exe" OR Name = "SKIFsvc64.exe" OR Name = "SKIF.exe") OR ((Name = "rundll32.exe") AND (CommandLine LIKE "%SpecialK%" OR CommandLine LIKE "%Special K%" OR ExecutablePath LIKE "%SpecialK%" OR ExecutablePath LIKE "%Special K%"))');
+    WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIFsvc.exe" OR Name = "SKIFsvc32.exe" OR Name = "SKIFsvc64.exe" OR Name = "SKIF.exe") OR ((Name = "rundll32.exe") AND (CommandLine LIKE "%SpecialK%" OR CommandLine LIKE "%Special K%" OR CommandLine LIKE "%' + InstallFolder + '%" OR ExecutablePath LIKE "%SpecialK%" OR ExecutablePath LIKE "%Special K%" OR ExecutablePath LIKE "%' + InstallFolder + '%"))');
 
     if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
     begin      
@@ -620,12 +628,20 @@ var
   WbemLocator   : Variant;
   WbemServices  : Variant;
   WbemObjectSet : Variant;
+  InstallFolder : String;
     
 begin
+  InstallFolder := ExtractFileName(RemoveBackslashUnlessRoot(ExpandConstant('{app}')));
+
+  if Length(InstallFolder) = 0 then
+  begin
+    InstallFolder := 'SpecialK';
+  end;  
+
   try
     WbemLocator   := CreateOleObject('WbemScripting.SWbemLocator');
     WbemServices  := WbemLocator.ConnectServer('localhost', 'root\CIMV2');
-    WbemObjectSet := WbemServices.ExecQuery('SELECT PathName FROM Win32_SystemDriver WHERE Name = "WinRing0_1_2_0" AND (PathName LIKE "%SpecialK%" OR PathName LIKE "%Special K%")');
+    WbemObjectSet := WbemServices.ExecQuery('SELECT PathName FROM Win32_SystemDriver WHERE Name = "WinRing0_1_2_0" AND (PathName LIKE "%SpecialK%" OR PathName LIKE "%Special K%" OR PathName LIKE "%' + InstallFolder + '%")');
 
     if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
     begin       
