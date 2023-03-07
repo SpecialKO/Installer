@@ -250,6 +250,21 @@ begin
   end; 
 end;
 
+// Detects and returns the install folder of Special K
+// This is called from [Setup] to dynamically set the install folder
+function GetSpecialKInstallFolder(SKInstallPath: String): String;
+//var
+//  SKInstallPath:    String;
+begin
+  SKInstallPath := ExpandConstant('{reg:HKCU\SOFTWARE\Kaldaien\Special K,Path|{commonpf64}\Special K}');
+
+  if DirExists(SKInstallPath) then
+  begin
+    Log(Format('Found Special K folder: %s', [SKInstallPath]));
+    Result := SKInstallPath;
+  end; 
+end;
+
 
 // -----------
 // LAAwareness
