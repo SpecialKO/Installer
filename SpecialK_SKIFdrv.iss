@@ -380,7 +380,10 @@ Filename: "{app}\SKIFdrv.exe";   Parameters: "Uninstall";   WorkingDir: "{app}";
   Flags: shellexec waituntilterminated; RunOnceId: "DeleteDrvService"
 
 
-[UninstallDelete]
+[UninstallDelete]                              
+; WinRing0.sys is the 32-bit driver of WinRing0, but it's not actually used or supported.
+; WinRing0.dll is the only thing required to allow 32-bit applications to use the 64-bit driver.
+Type: files;          Name: "{app}\WinRing0.sys"
 Type: files;          Name: "{app}\SKIFdrv.log"
 Type: dirifempty;     Name: "{app}"
 
