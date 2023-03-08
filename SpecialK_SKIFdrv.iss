@@ -49,6 +49,7 @@ UsePreviousAppDir                  = no
 DisableDirPage                     = no
 DefaultGroupName                   = {#SpecialKName}
 DisableProgramGroupPage            = yes
+InfoBeforeFile                     = {#AssetsDir}\SKIFdrv_InfoBefore.rtf
 LicenseFile                        = {#AssetsDir}\LICENSE.txt
 PrivilegesRequired                 = admin
 PrivilegesRequiredOverridesAllowed = 
