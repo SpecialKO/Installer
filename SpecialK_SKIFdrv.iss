@@ -15,9 +15,7 @@
 #define SpecialKUninstID  "{{A459BBFA-0819-49C4-8BF7-5BDF1559ED0C}"
 #define SpecialKVersion   GetStringFileInfo(SourceDir + '\SKIFdrv.exe', "ProductVersion")
 #define SpecialKHelpURL   "https://wiki.special-k.info/"
-#define SpecialKFileName  "redist_SK_WinRing0"
-#define DownloadURL       "https://sk-data.special-k.info/misc/redist_SK_WinRing0.exe"
-#define DownloadFileName  "redist_SK_WinRing0.exe"
+#define SpecialKFileName  "SK_WinRing0"
 
 #include "SpecialK_Shared.iss"
 
@@ -82,17 +80,6 @@ ConfirmUninstall =Are you sure you want to completely remove the %1?%n%nThis wil
 DiskSpaceMBLabel =
 
 [Code]
-var
-  DownloadPage: TDownloadWizardPage;
-
-
-function OnDownloadProgress(const Url, FileName: String; const Progress, ProgressMax: Int64): Boolean;
-begin
-  if Progress = ProgressMax then
-    Log(Format('Successfully downloaded file to {tmp}: %s', [FileName]));
-  Result := True;
-end;
-
 
 // Dependency handler
 function InitializeSetup: Boolean;
@@ -100,10 +87,6 @@ begin
   Log('Initializing Setup.');
 
   Log('Required dependencies:');
-
-  // DirectX End-User Runtime
-  //Dependency_AddDirectX;
-  // Not required any longer following the removal of CEGUI
   
   // 32-bit Visual C++ 2015-2022 Redistributable
   try
@@ -148,63 +131,6 @@ begin
 
   // Have the disk spacel label appear here instead of later
   WizardForm.DiskSpaceLabel.Parent := PageFromID(wpWelcome).Surface;
-
-  // Sets up the download page
-  DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), SetupMessage(msgPreparingDesc), @OnDownloadProgress);
-
-  if not WizardSilent() then
-  begin 
-    Log('Preparing music components.');
-    // Some nice background tunes
-    MusicPlayback := false;
-    ExtractTemporaryFile('techno_stargazev2.1loop.mp3');
-    mciSendString(ExpandConstant('open "{tmp}/techno_stargazev2.1loop.mp3" alias soundbg'), 0, 0, 0);
-    //mciSendString('play soundbg repeat', 0, 0, 0);
-    mciSendString('setaudio soundbg volume to 125', 0, 0, 0);
-
-    ToggleMusicButton         := TNewButton.Create(WizardForm);
-    ToggleMusicButton.Parent  := WizardForm;
-    ToggleMusicButton.Left    :=
-      WizardForm.ClientWidth -
-      WizardForm.CancelButton.Left - 
-      WizardForm.CancelButton.Width;
-    ToggleMusicButton.Top     := WizardForm.CancelButton.Top; //WizardForm.CancelButton.Top + 50;
-    ToggleMusicButton.Width   := WizardForm.CancelButton.Width;
-    ToggleMusicButton.Height  := WizardForm.CancelButton.Height;
-    ToggleMusicButton.Caption := 'Play Music';
-    ToggleMusicButton.OnClick := @ToggleButtonClick;
-    ToggleMusicButton.Anchors := [akLeft, akBottom];
-
-    CreditMusicButton         := TNewButton.Create(WizardForm);
-    CreditMusicButton.Parent  := WizardForm;
-    CreditMusicButton.Left    :=
-      WizardForm.ClientWidth -
-      WizardForm.NextButton.Left -
-      WizardForm.NextButton.Width;
-    CreditMusicButton.Top     := WizardForm.NextButton.Top; //WizardForm.CancelButton.Top + 50;
-    CreditMusicButton.Width   := WizardForm.NextButton.Width;
-    CreditMusicButton.Height  := WizardForm.NextButton.Height;
-    CreditMusicButton.Caption := 'Music By';
-    CreditMusicButton.OnClick := @CreditButtonClick;
-    CreditMusicButton.Anchors := [akLeft, akBottom];
-  end;
-end;
-
-
-procedure DeinitializeSetup();
-begin
-  if not WizardSilent() then
-  begin 
-    Log('Cleaning up music components.');
-    if MusicPlayback then
-    begin
-      // Stop music playback if it's currently playing
-      mciSendString(ExpandConstant('stop soundbg'), 0, 0, 0);
-      MusicPlayback := false;
-    end;
-    // Close the MCI device
-    mciSendString(ExpandConstant('close all'), 0, 0, 0);
-  end;
 end;
 
 
@@ -234,96 +160,6 @@ begin
 
     Wizardform.ReadyMemo.Show;
   end;
-end;                
-
-
-#if Defined DownloadURL
-function NextButtonClick(CurPageID: Integer): Boolean;
-begin
-  if CurPageID = wpReady then begin
-    if WizardIsTaskSelected('downgrade') then
-    begin
-      Log('User selected downgrade.');
-
-      Log('Downloading {#DownloadURL} as {#DownloadFileName} to ' + ExpandConstant('{tmp}'));
-      DownloadPage.Clear;
-      DownloadPage.Add('{#DownloadURL}', '{#DownloadFileName}', '');
-      DownloadPage.Show;
-      try
-        try
-          DownloadPage.Download; // This downloads the files to {tmp}
-          Result := True;
-        except
-          if DownloadPage.AbortedByUser then
-            Log('Aborted by user.')
-          else
-            SuppressibleMsgBox(AddPeriod(GetExceptionMessage), mbCriticalError, MB_OK, IDOK);
-          Result := False;
-        end;
-      finally
-        DownloadPage.Hide;
-      end;
-    end else
-      Result := True;
-  end else
-    Result := True;
-end;
-#endif
-
-
-function PrepareToInstall(var NeedsRestart: Boolean): String;
-var
-  WasVisible       : Boolean;
-  ResultCode       : Integer;
-
-begin 
-  Log('Preparing Install.');
-
-  WasVisible   := WizardForm.PreparingLabel.Visible;
-  Result       := '';
-  ResultCode   := 0;
-
-  try 
-    Log('Establishing WMI connection...'); 
-    WbemLocator   := CreateOleObject('WbemScripting.SWbemLocator');
-    WbemServices  := WbemLocator.ConnectServer('localhost', 'root\CIMV2');
-
-    WizardForm.PreparingLabel.Visible := True;
-    WizardForm.PreparingLabel.Caption := '';
-    Wizardform.NextButton.Visible := False;
-    Wizardform.NextButton.Enabled := False;
-    Wizardform.BackButton.Visible := False;
-    Wizardform.BackButton.Enabled := False;
-
-    if not WizardSilent() then
-    begin
-      // Check if NT AUTHORITY\INTERACTIVE is in BUILTIN\Performance Log Users and if not, make it so
-      WizardForm.PreparingLabel.Caption := 'Checking membership in the local ''Performance Log Users'' group...';
-      Log('Checking membership in the local ''Performance Log Users'' group.');
-
-      if not IsInteractiveInPLU() then
-      begin
-        WizardForm.PreparingLabel.Caption := 'Attempting to grant membership in the local ''Performance Log Users'' group...';
-        Log('Launching ''net'' elevated to add user (' + LocINTUserName + ') to the group (' + LocPLUGroupName + ').');
-        ShellExec('RunAs', 'net', 'localgroup "' + LocPLUGroupName + '" "' + LocINTUserName + '" /add', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
-
-        Sleep(500);
-
-        if ResultCode <> 0 then
-        begin
-          Log('Failed to grant permission : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
-        end;      
-      end;
-
-      ResultCode   := 0;
-    end;
-  
-  except 
-    Log('Catastrophic error in PrepareToInstall()!');
-    // Surpresses exception when task does not exist or another issue prevents proper lookup
-  finally
-    WizardForm.PreparingLabel.Visible := WasVisible;
-  end;
 end;
 
 
@@ -338,42 +174,17 @@ Type: files;          Name: "{app}\Version\unins00*"
 ; In order to extract an arbitrary file in a solid-compressed installation, Setup must first decompress all prior files (to a temporary buffer in memory).
 ; This can result in a substantial delay if a number of other files are listed above the specified file in the [Files] section.
 
-; Temporary files that are extracted as needed
-Source: "{#AssetsDir}\techno_stargazev2.1loop.mp3";  DestDir: {tmp};            Flags: dontcopy;
-
+; No need to replace the driver if it already exists
 Source: "{#SourceDir}\*.sys";                        DestDir: "{app}";          Flags: restartreplace uninsrestartdelete;
 
 ; Remaining files should always be recreated.
 ; NOTE: This line causes the files included above to be counted twice in DiskSpaceMBLabel
 Source: "{#SourceDir}\*";                            DestDir: "{app}";          Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "WinRing0.sys,WinRing0x64.sys"
 
-; [Dirs]
-; Name: "{app}";          Permissions: users-modify
-
-
-;[Tasks]
-; Name: downgrade;   Description: "Downgrade game (required for >60 FPS)";                Flags: unchecked;
-
 
 [Run]
 Filename: "{app}\SKIFdrv.exe";   Parameters: "Install";   WorkingDir: "{app}"; \
   Flags: shellexec waituntilterminated; StatusMsg: "Performing final driver installation..."
-
-; Checked by default
-
-;Filename: "{#SpecialKHelpURL}";                     Description: "Open the wiki"; \
-;  Flags: shellexec nowait postinstall skipifsilent
-
-; Unchecked by default
-
-;Filename: "{#SpecialKDiscord}";                     Description: "Join the Discord server"; \
-;  Flags: shellexec nowait postinstall skipifsilent unchecked
-
-;Filename: "{#SpecialKForum}";                       Description: "Visit the forum"; \
-;  Flags: shellexec nowait postinstall skipifsilent unchecked
-
-;Filename: "{#SpecialKPatreon}";                     Description: "Support the project on Patreon"; \
-;  Flags: shellexec nowait postinstall skipifsilent unchecked
 
 
 [UninstallRun]
