@@ -28,7 +28,10 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 ArchitecturesInstallIn64BitMode    = x64
 ArchitecturesAllowed               = x86 x64
-MinVersion                         = 6.3.9600
+; Windows 8.1
+MinVersion                        = 6.3.9600
+; Windows 7 SP1
+;MinVersion                         = 6.1sp1
 AppId                              = {{F4A43527-9457-424A-90A6-17CF02ACF677}
 AppName                            = {#SpecialKName}
 AppVersion                         = {#SpecialKVersion}  
@@ -123,21 +126,22 @@ procedure InitializeWizard();
 begin 
   Log('Initializing Wizard.');
 
-  // Fixes Inno Setup no taskbar preview
-  // From StackOverflow: https://stackoverflow.com/a/64162597/15133327
-  // Created by: https://stackoverflow.com/users/709507/inside-man
-  // Licensed under CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/
-  //
-  // Technically wrong: "You must not call SetWindowLong with the GWL_HWNDPARENT index to change the parent of a child window.
-  //                     Instead, use the SetParent function." 
-  Log('Fixing the no taskbar preview bug of Inno Setup.');
-  SetWindowLong(WizardForm.Handle, -8, GetWindowLong(GetWindow(WizardForm.Handle, 4), -8));
-
-  // Have the disk spacel label appear here instead of later
-  WizardForm.DiskSpaceLabel.Parent := PageFromID(wpWelcome).Surface;
-
   if not WizardSilent() then
   begin 
+
+    // Fixes Inno Setup no taskbar preview
+    // From StackOverflow: https://stackoverflow.com/a/64162597/15133327
+    // Created by: https://stackoverflow.com/users/709507/inside-man
+    // Licensed under CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/
+    //
+    // Technically wrong: "You must not call SetWindowLong with the GWL_HWNDPARENT index to change the parent of a child window.
+    //                     Instead, use the SetParent function." 
+    Log('Fixing the no taskbar preview bug of Inno Setup.');
+    SetWindowLong(WizardForm.Handle, -8, GetWindowLong(GetWindow(WizardForm.Handle, 4), -8));
+
+    // Have the disk spacel label appear here instead of later
+    WizardForm.DiskSpaceLabel.Parent := PageFromID(wpWelcome).Surface;
+
     Log('Preparing music components.');
     // Some nice background tunes
     MusicPlayback := false;
@@ -313,44 +317,45 @@ begin
         end;
 
         ResultCode   := 0;
-      end;
 
-      // Clean up any remains from super duper old legacy global injection method
-      WizardForm.PreparingLabel.Caption := 'Determining if a legacy injection method is present on the system...';
-      Log('Checking for legacy AppInit_DLLs method.');
+        // Clean up any remains from super duper old legacy global injection method
+        WizardForm.PreparingLabel.Caption := 'Determining if a legacy injection method is present on the system...';
+        Log('Checking for legacy AppInit_DLLs method.');
 
-      AppInitDLLs32    := '';
-      AppInitDLLs64    := '';
-      AppInitDLLs32Pos := 0;
-      AppInitDLLs64Pos := 0;
+        AppInitDLLs32    := '';
+        AppInitDLLs64    := '';
+        AppInitDLLs32Pos := 0;
+        AppInitDLLs64Pos := 0;
 
-      RegQueryStringValue  (HKLM32, 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows', 'AppInit_DLLs', AppInitDLLs32);
-      if IsWin64 then
-      begin
-        RegQueryStringValue(HKLM64, 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows', 'AppInit_DLLs', AppInitDLLs64);
-      end;
-      AppInitDLLs32Pos := Pos('SpecialK', AppInitDLLs32);
-      AppInitDLLs64Pos := Pos('SpecialK', AppInitDLLs64);
-      
-      if (AppInitDLLs32Pos > 0) or (AppInitDLLs64Pos > 0) then
-      begin
-        WizardForm.PreparingLabel.Caption := 'Running cleanup commands in an elevated process...';
-        Log('AppInitDLLs 32-bit : ' + AppInitDLLs32);
-        Log('AppInitDLLs 64-bit : ' + AppInitDLLs64);
-
-        ExtractTemporaryFile('Unregister-AppInitDLLs.ps1');
-               
-        Log('Calling an elevated Powershell session to run Unregister-AppInitDLLs.ps1');
-        ShellExec('RunAs', 'powershell', ExpandConstant('-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "{tmp}\Unregister-AppInitDLLs.ps1"'), '', SW_SHOW, ewWaitUntilTerminated, ResultCode);      
-
-        Sleep(500);
-
-        if ResultCode <> 0 then
+        RegQueryStringValue  (HKLM32, 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows', 'AppInit_DLLs', AppInitDLLs32);
+        if IsWin64 then
         begin
-          Log('Failed to run elevated PowerShell session : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
+          RegQueryStringValue(HKLM64, 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows', 'AppInit_DLLs', AppInitDLLs64);
         end;
-      end;
+        AppInitDLLs32Pos := Pos('SpecialK', AppInitDLLs32);
+        AppInitDLLs64Pos := Pos('SpecialK', AppInitDLLs64);
+        
+        if (AppInitDLLs32Pos > 0) or (AppInitDLLs64Pos > 0) then
+        begin
+          WizardForm.PreparingLabel.Caption := 'Running cleanup commands in an elevated process...';
+          Log('AppInitDLLs 32-bit : ' + AppInitDLLs32);
+          Log('AppInitDLLs 64-bit : ' + AppInitDLLs64);
 
+          ExtractTemporaryFile('Unregister-AppInitDLLs.ps1');
+                 
+          Log('Calling an elevated Powershell session to run Unregister-AppInitDLLs.ps1');
+          ShellExec('RunAs', 'powershell', ExpandConstant('-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "{tmp}\Unregister-AppInitDLLs.ps1"'), '', SW_SHOW, ewWaitUntilTerminated, ResultCode);      
+
+          Sleep(500);
+
+          if ResultCode <> 0 then
+          begin
+            Log('Failed to run elevated PowerShell session : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
+          end;
+        end;
+
+        ResultCode   := 0;
+      end;
       
       // Stop current running global injection
       if (IsGlobalInjectorOrSKIFRunning()) and (FileExists(ExpandConstant('{app}\SKIF.exe'))) then
@@ -472,7 +477,7 @@ begin
 
     if IsKernelDriver then
     begin
-      PowerShellArgs := PowerShellArgs + 'Stop-Service -Name ''WinRing0_1_2_0''; sc.exe delete ''WinRing0_1_2_0''; ';
+      PowerShellArgs := PowerShellArgs + 'Stop-Service -Name ''SK_WinRing0''; sc.exe delete ''SK_WinRing0''; ';
     end;
 
     if (IsSKIFAutoStart) or (IsKernelDriver) then
@@ -570,10 +575,10 @@ Name:     "{userdocs}\My Mods\Special K";  Filename: "{app}";
 ; Checked by default
 
 Filename: "{app}\{#SpecialKExeName}";               Description: "{cm:LaunchProgram,{#StringChange(SpecialKName, '&', '&&')}}"; \
-  Flags: nowait postinstall runasoriginaluser
+  Flags: nowait postinstall runasoriginaluser skipifsilent
 
 Filename: "{#SpecialKHelpURL}";                     Description: "Open the wiki"; \
-  Flags: shellexec nowait postinstall skipifsilent
+  Flags: shellexec nowait postinstall skipifsilent unchecked
 
 ; Unchecked by default
 

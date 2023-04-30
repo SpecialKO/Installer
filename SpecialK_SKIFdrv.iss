@@ -65,6 +65,7 @@ UninstallDisplayIcon               = {app}\unins000.exe
 CloseApplications                  = yes
 DisableWelcomePage                 = no
 SetupLogging                       = yes
+;SignTool                           = signtool
 
 
 [Languages]
@@ -188,7 +189,7 @@ Filename: "{app}\SKIFdrv.exe";   Parameters: "Install";   WorkingDir: "{app}"; \
 
 
 [UninstallRun]
-Filename: "{app}\SKIFdrv.exe";   Parameters: "Uninstall";   WorkingDir: "{app}"; \
+Filename: "{app}\SKIFdrv.exe";   Parameters: "Uninstall Silent";   WorkingDir: "{app}"; \
   Flags: shellexec waituntilterminated; RunOnceId: "DeleteDrvService"
 
 
