@@ -29,9 +29,9 @@
 ArchitecturesInstallIn64BitMode    = x64
 ArchitecturesAllowed               = x86 x64
 ; Windows 8.1
-MinVersion                        = 6.3.9600
+MinVersion                         = 6.3.9600
 ; Windows 7 SP1
-;MinVersion                         = 6.1sp1
+;MinVersion                        = 6.1sp1
 AppId                              = {{F4A43527-9457-424A-90A6-17CF02ACF677}
 AppName                            = {#SpecialKName}
 AppVersion                         = {#SpecialKVersion}  
@@ -40,7 +40,7 @@ AppPublisher                       = {#SpecialKPublisher}
 AppPublisherURL                    = {#SpecialKURL}
 AppSupportURL                      = {#SpecialKHelpURL}
 AppUpdatesURL                      = 
-AppCopyright                       = Copyleft 🄯 2015-2022
+AppCopyright                       = Copyleft 🄯 2015-2023
 VersionInfoVersion                 = {#SpecialKVersion}
 VersionInfoOriginalFileName        = SpecialK_{#SpecialKVersion}.exe
 VersionInfoCompany                 = {#SpecialKPublisher}
@@ -80,6 +80,7 @@ UninstallAppTitle={#SpecialKName} Uninstall
 WelcomeLabel2    =This will install {#SpecialKName} v {#SpecialKVersion} on your computer.%n%nLovingly referred to as the Swiss Army Knife of PC gaming, Special K does a bit of everything. It is best known for fixing and enhancing graphics, its many detailed performance analysis and correction mods, and a constantly growing palette of tools that solve a wide variety of issues affecting PC games.%n%nIt is recommended that you close all other applications before continuing.
 ConfirmUninstall =Are you sure you want to completely remove %1 and all of its components?%n%nThis will also remove any Special K game data (screenshots, texture packs, configs) stored in the Profiles subfolder.  
 DiskSpaceMBLabel =
+
 
 [Code]
 // Shared code is stored in SpecialK_Shared.iss
@@ -575,7 +576,7 @@ Name:     "{userdocs}\My Mods\Special K";  Filename: "{app}";
 ; Checked by default
 
 Filename: "{app}\{#SpecialKExeName}";               Description: "{cm:LaunchProgram,{#StringChange(SpecialKName, '&', '&&')}}"; \
-  Flags: nowait postinstall runasoriginaluser skipifsilent
+  Flags: nowait postinstall runasoriginaluser;      Check: SwitchHasValue('LaunchSKIF', 'true', 'true');
 
 Filename: "{#SpecialKHelpURL}";                     Description: "Open the wiki"; \
   Flags: shellexec nowait postinstall skipifsilent unchecked
