@@ -584,18 +584,22 @@ Filename: "{#SpecialKHelpURL}";                     Description: "Open the wiki"
 ; Unchecked by default
 
 Filename: "{#SpecialKDiscord}";                     Description: "Join the Discord server"; \
-  Flags: shellexec nowait postinstall skipifsilent unchecked
+   Flags: shellexec nowait postinstall skipifsilent unchecked
 
 Filename: "{#SpecialKForum}";                       Description: "Visit the forum"; \
-  Flags: shellexec nowait postinstall skipifsilent unchecked
+   Flags: shellexec nowait postinstall skipifsilent unchecked
 
 Filename: "{#SpecialKPatreon}";                     Description: "Support the project on Patreon"; \
-  Flags: shellexec nowait postinstall skipifsilent unchecked
+   Flags: shellexec nowait postinstall skipifsilent unchecked
 
 ; Start up OneDrive again after installation has succeeded
 
 Filename: "{code:GetOneDrivePath}";                 Description: "Start OneDrive";    Parameters: "/background"; \
-  Flags: nowait;      Check: RestartOneDrive;
+   Flags: nowait;      Check: RestartOneDrive;
+
+; Disable GFE for SKIF
+Filename: "rundll32.exe";   WorkingDir: "{app}";    Description: "Disable G-Sync/GeForce Experience for SKIF"; \
+   Flags: shellexec nowait;  Parameters: "SpecialK64.dll,RunDLL_DisableGFEForSKIF silent";
 
 
 [UninstallDelete]
