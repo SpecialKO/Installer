@@ -518,6 +518,7 @@ Type: files;          Name: "{app}\Servlet\driver_uninstall.ps1"
 Type: files;          Name: "{app}\Servlet\disable_logon.bat"
 Type: files;          Name: "{app}\Servlet\enable_logon.bat"
 Type: files;          Name: "{app}\Servlet\task_eject.bat"
+Type: filesandordirs; Name: "{app}\Fonts"
 
 
 [Registry]
