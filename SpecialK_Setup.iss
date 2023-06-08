@@ -67,7 +67,7 @@ UninstallDisplayIcon               = {app}\SKIF.exe
 CloseApplications                  = yes
 DisableWelcomePage                 = no
 SetupLogging                       = yes
-
+SetupMutex                         = SKSetupMutex{#SetupSetting("AppId")}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
