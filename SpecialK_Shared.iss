@@ -67,6 +67,21 @@ end;
 
 
 // -----------
+// Windows version helpers
+// -----------
+
+function IsWindows10OrLater: Boolean;
+begin
+  Result := (GetWindowsVersion >= $0A002800);
+end;
+
+function IsWindows8OrLater: Boolean;
+begin
+  Result := (GetWindowsVersion >= $06020000);
+end;
+
+
+// -----------
 // Music playback
 // -----------
 

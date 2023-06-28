@@ -306,6 +306,9 @@ begin
         if not IsInteractiveInPLU() then
         begin
           WizardForm.PreparingLabel.Caption := 'Attempting to grant membership in the local ''Performance Log Users'' group...';
+
+          // We need to use 'net' here regardless of Windows version due to Inno Setup bitness/file system redirection limitations
+          // Specifically that {sysnative} or C:\Windows\sysnative\ or %windir%\sysnative is not usable with ShellExec 
           Log('Launching ''net'' elevated to add user (' + LocINTUserName + ') to the group (' + LocPLUGroupName + ').');
           ShellExec('RunAs', 'net', 'localgroup "' + LocPLUGroupName + '" "' + LocINTUserName + '" /add', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
 
