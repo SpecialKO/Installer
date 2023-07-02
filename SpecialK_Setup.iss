@@ -530,6 +530,7 @@ Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: 
 Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K";                                                      Flags: dontcreatekey uninsdeletevalue
 Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\SKIF.exe";     ValueType: string; ValueData: "{app}\{#SpecialKExeName}"; Flags: dontcreatekey uninsdeletekey   createvalueifdoesntexist
 Root: HKCU; Subkey: "SOFTWARE\Kaldaien\Special K";                   ValueName: "Path"; ValueType: string; ValueData: "{app}";                    Flags:               uninsdeletevalue createvalueifdoesntexist
+Root: HKCU; Subkey: "SOFTWARE\Kaldaien";                                                                                                          Flags: dontcreatekey uninsdeletekey
 
 
 [Files]
