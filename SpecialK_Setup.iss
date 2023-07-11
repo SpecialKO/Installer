@@ -361,11 +361,12 @@ begin
         ResultCode   := 0;
       end;
       
-      // Stop current running global injection
-      if (IsGlobalInjectorOrSKIFRunning()) and (FileExists(ExpandConstant('{app}\SKIF.exe'))) then
-      begin 
-        Log('Stopping Special K Injection Frontend (SKIF) and the global injection service...');
-        WizardForm.PreparingLabel.Caption := 'Stopping Special K Injection Frontend (SKIF) and the global injection service...';
+      // If the service or SKIF is running, attempt to stop them gracefully
+      if (IsSKIForSvcRunning()) and (FileExists(ExpandConstant('{app}\SKIF.exe'))) then
+      begin
+        Log('SKIF.exe file check : detected'); 
+        Log('Stopping Special K Injection Frontend (SKIF) and the injection service...');
+        WizardForm.PreparingLabel.Caption := 'Stopping Special K Injection Frontend (SKIF) and the injection service...';
 
         if FileExists(ExpandConstant('{app}\SpecialK32.dll')) or FileExists(ExpandConstant('{app}\SpecialK64.dll')) then
         begin
@@ -380,13 +381,13 @@ begin
       end;
 
       
-      // If SKIF is still running, force close it
-      if (IsSKIFRunning()) then
+      // If any component is still running, forcefully close them
+      if (IsSKIForSvcRunning()) then
       begin 
         Log('Forcefully stopping Special K Injection Frontend (SKIF).');
         WizardForm.PreparingLabel.Caption := 'Forcefully stopping Special K Injection Frontend (SKIF)...';
 
-        StopSKIF();
+        ForceStopSKIFandSvc();
 
         Sleep(500);
       end;
@@ -442,20 +443,40 @@ begin
     DefaultCaption := UninstallProgressForm.StatusLabel.Caption;
     InstallFolder := ExpandConstant('{app}');
 
-    if (FileExists(InstallFolder + '\SKIF.exe')) then
+    if (IsSKIForSvcRunning()) and (FileExists(InstallFolder + '\SKIF.exe')) then
     begin 
-      Log('SKIF.exe file check : detected');
-      UninstallProgressForm.StatusLabel.Caption := 'Stopping SKIF and the global injection service if they are running...';
+      Log('SKIF.exe file check : detected'); 
+      Log('Stopping Special K Injection Frontend (SKIF) and the injection service...');
+      UninstallProgressForm.StatusLabel.Caption := 'Stopping Special K Injection Frontend (SKIF) and the injection service...';
       Exec(InstallFolder + '\SKIF.exe', 'Stop Quit', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+      if FileExists(InstallFolder + '\SpecialK32.dll') or FileExists(InstallFolder + '\SpecialK64.dll') then
+      begin
+        Exec(InstallFolder + '\SKIF.exe', 'Stop Quit', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+      end
+      else
+      begin
+        Exec(InstallFolder + '\SKIF.exe', 'Quit', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+      end;
 
       Sleep(500);
 
       if ResultCode <> 0 then
       begin
-        Log('Global injection failed to stop : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
+        Log('SKIF or the injection service failed to stop : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
       end;
     end;
-    
+
+    // If any component is still running, forcefully close them
+    if (IsSKIForSvcRunning()) then
+    begin 
+      Log('Forcefully stopping Special K Injection Frontend (SKIF).');
+      UninstallProgressForm.StatusLabel.Caption := 'Forcefully stopping Special K Injection Frontend (SKIF)...';
+
+      ForceStopSKIFandSvc();
+
+      Sleep(500);
+    end;    
 
     UninstallProgressForm.StatusLabel.Caption := 'Determining if any Special K components requires elevation to remove...';
 

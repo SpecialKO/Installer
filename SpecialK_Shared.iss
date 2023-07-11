@@ -500,8 +500,8 @@ end;
 // SKIF and Injection Service
 // -----------
 
-// Checks if the global injector service of Special K or SKIF is running
-function IsGlobalInjectorOrSKIFRunning(): Boolean;
+// Checks if the injector service of Special K or SKIF is running
+function IsSKIForSvcRunning(): Boolean;
 var
   WbemObjectSet : Variant;
   InstallFolder : String;
@@ -523,7 +523,7 @@ begin
     end;
 
   except 
-    Log('Catastrophic error in IsGlobalInjectorOrSKIFRunning()!');
+    Log('Catastrophic error in IsSKIForSvcRunning()!');
     // Surpresses exception when an issue prevents proper lookup
   end;
 end;
@@ -549,13 +549,17 @@ begin
   end;
 end;
 
-// Stops SKIF
-function StopSKIF(): Integer;
+// Forcefully stops SKIF and the service components
+function ForceStopSKIFandSvc(): Integer;
 begin
   try
     Exec('taskkill.exe', '/F /IM SKIF.exe', '', SW_HIDE, ewNoWait, Result);
+
+    // Not safe to do as it seems to get the service stuck in an unstartable state
+    //Exec('taskkill.exe', '/F /IM SKIFsvc32.exe', '', SW_HIDE, ewNoWait, Result);
+    //Exec('taskkill.exe', '/F /IM SKIFsvc64.exe', '', SW_HIDE, ewNoWait, Result);
   except 
-    Log('Catastrophic error in StopSKIF()!');
+    Log('Catastrophic error in ForceStopSKIFandSvc()!');
     // Surpresses exception when an issue prevents proper lookup
   end;
 end;
