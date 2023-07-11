@@ -255,11 +255,7 @@ begin
   Result       := '';
   ResultCode   := 0;
 
-  try 
-    Log('Establishing WMI connection...'); 
-    WbemLocator   := CreateOleObject('WbemScripting.SWbemLocator');
-    WbemServices  := WbemLocator.ConnectServer('localhost', 'root\CIMV2');
-
+  try
     WizardForm.PreparingLabel.Visible := True;
     WizardForm.PreparingLabel.Caption := '';
     Wizardform.NextButton.Visible := False;
@@ -634,7 +630,12 @@ Type: files;          Name: "{userprograms}\Startup\SKIF.lnk"
 Type: files;          Name: "{userprograms}\Startup\SKIFsvc32.lnk"
 Type: files;          Name: "{userprograms}\Startup\SKIFsvc64.lnk"
 Type: files;          Name: "{app}\SpecialK32.old"
-Type: files;          Name: "{app}\SpecialK64.old" 
+Type: files;          Name: "{app}\SpecialK64.old"
+Type: files;          Name: "{app}\imgui.ini"
+Type: files;          Name: "{app}\SKIF.ini"
+Type: files;          Name: "{app}\SKIF.log"
+Type: files;          Name: "{app}\SKIF_launcher.log"
+Type: files;          Name: "{app}\patrons.txt" 
 Type: filesandordirs; Name: "{app}\Drivers\Dbghelp" 
 Type: filesandordirs; Name: "{app}\Drivers\WinRing0"
 Type: filesandordirs; Name: "{app}\Assets"
@@ -647,10 +648,6 @@ Type: filesandordirs; Name: "{app}\Fonts"
 Type: filesandordirs; Name: "{app}\ReadMe"
 Type: filesandordirs; Name: "{app}\Servlet"
 Type: filesandordirs; Name: "{app}\Version"
-Type: filesandordirs; Name: "{app}\imgui.ini"
-Type: filesandordirs; Name: "{app}\SKIF.ini"
-Type: filesandordirs; Name: "{app}\SKIF.log"
-Type: filesandordirs; Name: "{app}\patrons.txt"
 Type: dirifempty;     Name: "{app}"  
 Type: dirifempty;     Name: "{userdocs}\My Mods"
 

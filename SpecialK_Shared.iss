@@ -416,6 +416,43 @@ end;
 
 
 // -----------
+// WMI
+// -----------
+
+function InitializeWMI(): Boolean;
+begin
+  if VarIsEmpty(WbemLocator) or VarIsEmpty(WbemServices) then
+  begin
+    try
+      if VarIsEmpty(WbemLocator) then
+      begin
+        Log('Creating an IDispatch based COM Automation object...');
+        WbemLocator   := CreateOleObject('WbemScripting.SWbemLocator');
+      end;
+
+      if not VarIsEmpty(WbemLocator) and VarIsEmpty(WbemServices) then
+      begin
+        Log('Connecting to the local root\CIMV2 WMI namespace...');
+        WbemServices  := WbemLocator.ConnectServer('', 'root\CIMV2'); // Let's not include 'localhost'
+      end;
+
+      if not VarIsEmpty(WbemLocator) and not VarIsEmpty(WbemServices) then
+      begin       
+        Result := true;
+      end;
+    except 
+      Log('Catastrophic error in InitializeWMI() !');
+      // Surpresses exception when an issue prevents proper lookup
+    end;
+  end
+  else
+  begin
+    Result := true;
+  end;
+end;
+
+
+// -----------
 // PresentMon
 // -----------
 
@@ -444,49 +481,56 @@ begin
       SID     : S-1-5-4
     *)
 
-    // Retrieve the localized name of the PLU group  
-    WbemObjectSet      := WbemServices.ExecQuery('SELECT * FROM Win32_Group WHERE (LocalAccount = True) AND (SID = "S-1-5-32-559")');
-
-    if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
+    if InitializeWMI() then
     begin
-      ComputerName    := WbemObjectSet.ItemIndex(0).Domain;
-      LocPLUGroupName := WbemObjectSet.ItemIndex(0).Name;
-      
-      //MsgBox(ComputerName,    mbInformation, MB_OK);
-      //MsgBox(LocPLUGroupName, mbInformation, MB_OK);
+      Log('Attempting to retrieve PLU membership...');
 
-      if not VarIsNull(ComputerName) and not VarIsNull(LocPLUGroupName) then
+      // Retrieve the localized name of the PLU group  
+      WbemObjectSet      := WbemServices.ExecQuery('SELECT * FROM Win32_Group WHERE (LocalAccount = True) AND (SID = "S-1-5-32-559")');
+
+      if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
       begin
-        WbemObjectSet := Null;
+        ComputerName    := WbemObjectSet.ItemIndex(0).Domain;
+        LocPLUGroupName := WbemObjectSet.ItemIndex(0).Name;
+        
+        //MsgBox(ComputerName,    mbInformation, MB_OK);
+        //MsgBox(LocPLUGroupName, mbInformation, MB_OK);
 
-        // Retrieve members of the local PLU group
-        WbemObjectSet := WbemServices.ExecQuery('ASSOCIATORS OF {Win32_Group.Domain="' + ComputerName + '",Name="' + LocPLUGroupName + '"} WHERE assocClass=Win32_GroupUser Role=GroupComponent ResultRole=PartComponent');
-        if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
+        if not VarIsNull(ComputerName) and not VarIsNull(LocPLUGroupName) then
         begin
-          for I := 0 to WbemObjectSet.Count - 1 do
+          WbemObjectSet := Null;
+
+          // Retrieve members of the local PLU group
+          WbemObjectSet := WbemServices.ExecQuery('ASSOCIATORS OF {Win32_Group.Domain="' + ComputerName + '",Name="' + LocPLUGroupName + '"} WHERE assocClass=Win32_GroupUser Role=GroupComponent ResultRole=PartComponent');
+          if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
           begin
-            // Check if one of the members is NT AUTHORITY\Interactive 
-            if (WbemObjectSet.ItemIndex(I).SID = 'S-1-5-4') then
+            for I := 0 to WbemObjectSet.Count - 1 do
             begin
-              IsMember := True;
+              // Check if one of the members is NT AUTHORITY\Interactive 
+              if (WbemObjectSet.ItemIndex(I).SID = 'S-1-5-4') then
+              begin
+                IsMember := True;
+              end;
             end;
           end;
         end;
-      end;
 
-      // If Interactive was not a member, we still need to retrieve the localized username
-      if not IsMember then
-      begin
-        WbemObjectSet := Null;
-          
-        WbemObjectSet      := WbemServices.ExecQuery('SELECT * FROM Win32_SystemAccount WHERE (LocalAccount = True) AND (SID = "S-1-5-4")');
-        if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
+        // If Interactive was not a member, we still need to retrieve the localized username
+        if not IsMember then
         begin
-          LocINTUserName := WbemObjectSet.ItemIndex(0).Name;
+          Log('Attempting to retrieve localized username for NT AUTHORITY\Interactive...');
+          WbemObjectSet := Null;
+            
+          WbemObjectSet      := WbemServices.ExecQuery('SELECT * FROM Win32_SystemAccount WHERE (LocalAccount = True) AND (SID = "S-1-5-4")');
+          if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
+          begin
+            LocINTUserName := WbemObjectSet.ItemIndex(0).Name;
+          end;
         end;
+
+        Result := IsMember;
       end;
 
-      Result := IsMember;
     end;
 
   except 
@@ -515,11 +559,15 @@ begin
   end; 
 
   try
-    WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIFsvc.exe" OR Name = "SKIFsvc32.exe" OR Name = "SKIFsvc64.exe" OR Name = "SKIF.exe") OR ((Name = "rundll32.exe") AND (CommandLine LIKE "%SpecialK%" OR CommandLine LIKE "%Special K%" OR CommandLine LIKE "%' + InstallFolder + '%" OR ExecutablePath LIKE "%SpecialK%" OR ExecutablePath LIKE "%Special K%" OR ExecutablePath LIKE "%' + InstallFolder + '%"))');
 
-    if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
-    begin      
-      Result := true;
+    if InitializeWMI() then
+    begin
+      WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIFsvc.exe" OR Name = "SKIFsvc32.exe" OR Name = "SKIFsvc64.exe" OR Name = "SKIF.exe") OR ((Name = "rundll32.exe") AND (CommandLine LIKE "%SpecialK%" OR CommandLine LIKE "%Special K%" OR CommandLine LIKE "%' + InstallFolder + '%" OR ExecutablePath LIKE "%SpecialK%" OR ExecutablePath LIKE "%Special K%" OR ExecutablePath LIKE "%' + InstallFolder + '%"))');
+
+      if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
+      begin      
+        Result := true;
+      end;
     end;
 
   except 
@@ -536,11 +584,14 @@ var
     
 begin
   try
-    WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIF.exe")');
+    if InitializeWMI() then
+    begin
+      WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIF.exe")');
 
-    if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
-    begin      
-      Result := true;
+      if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
+      begin      
+        Result := true;
+      end;
     end;
 
   except 
@@ -610,15 +661,18 @@ var
     
 begin
   try
-    WbemObjectSet := WbemServices.ExecQuery('SELECT ExecutablePath FROM Win32_Process WHERE (Name = "OneDrive.exe")');
-
-    if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
+    if InitializeWMI() then
     begin
-      Path := WbemObjectSet.ItemIndex(0).ExecutablePath;
-      if Length(Path) > 0 then
+      WbemObjectSet := WbemServices.ExecQuery('SELECT ExecutablePath FROM Win32_Process WHERE (Name = "OneDrive.exe")');
+
+      if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
       begin
-        OneDrivePath := Path;
-        Result := true;
+        Path := WbemObjectSet.ItemIndex(0).ExecutablePath;
+        if Length(Path) > 0 then
+        begin
+          OneDrivePath := Path;
+          Result := true;
+        end;
       end;
     end;
   except 
@@ -659,8 +713,6 @@ end;
 // Checks if the WinRing0 kernel driver is installed
 function IsKernelDriverInstalled(): Boolean;
 var
-  WbemLocator   : Variant;
-  WbemServices  : Variant;
   WbemObjectSet : Variant;
   InstallFolder : String;
     
@@ -673,13 +725,14 @@ begin
   end;  
 
   try
-    WbemLocator   := CreateOleObject('WbemScripting.SWbemLocator');
-    WbemServices  := WbemLocator.ConnectServer('localhost', 'root\CIMV2');
-    WbemObjectSet := WbemServices.ExecQuery('SELECT PathName FROM Win32_SystemDriver WHERE Name = "SK_WinRing0"'); //  AND (PathName LIKE "%SpecialK%" OR PathName LIKE "%Special K%" OR PathName LIKE "%' + InstallFolder + '%")
+    if InitializeWMI() then
+    begin
+      WbemObjectSet := WbemServices.ExecQuery('SELECT PathName FROM Win32_SystemDriver WHERE Name = "SK_WinRing0"'); //  AND (PathName LIKE "%SpecialK%" OR PathName LIKE "%Special K%" OR PathName LIKE "%' + InstallFolder + '%")
 
-    if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
-    begin       
-      Result := true;
+      if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
+      begin       
+        Result := true;
+      end;
     end;
 
   except 
