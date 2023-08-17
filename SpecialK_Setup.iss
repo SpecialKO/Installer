@@ -623,6 +623,9 @@ Filename: "{code:GetOneDrivePath}";                 Description: "Start OneDrive
 Filename: "rundll32.exe";   WorkingDir: "{app}";    Description: "Disable G-Sync/GeForce Experience for SKIF"; \
    Flags: shellexec nowait;  Parameters: "SpecialK64.dll,RunDLL_DisableGFEForSKIF silent";     Check: IsWin64;
 
+Filename: "rundll32.exe";   WorkingDir: "{app}";    Description: "Disable G-Sync/GeForce Experience for SKIF"; \
+   Flags: shellexec nowait;  Parameters: "SpecialK32.dll,RunDLL_DisableGFEForSKIF silent";     Check: not IsWin64;
+
 
 [UninstallDelete]
 Type: files;          Name: "{userprograms}\Startup\SKIM64.lnk"
