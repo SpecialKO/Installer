@@ -23,13 +23,20 @@
   #define SpecialKVersion   GetStringFileInfo(SourceDir + '\d3d9.dll', "ProductVersion")
   #define SpecialKHelpURL   "https://wiki.special-k.info/en/SpecialK/Custom/TSFix"
   #define BackupFile        "TOS.exe"
-  //#define DownloadURL       "https://sk-data.special-k.info/misc/nier_replicant_1.0.exe"
-  //#define DownloadFileName  "NieR Replicant ver.1.22474487139.exe"
 
   // Texture packs
-  #define dlc_cleanup_4k_upscale_URL       "https://sk-data.special-k.info/TSFix/99_Upscale4x.7z"
-  #define dlc_cleanup_4k_upscale_FileName  "99_Upscale4x.7z"
+  #define File_dlc_cleanup_ui          "97_UICleanup.7z"
+  #define File_dlc_cleanup_effects     "98_Cleanup.7z"
+  #define File_dlc_cleanup_characters  "98_CharactersCombined.7z"
+  #define File_dlc_cleanup_font        "01_CleanFont.7z"
 
+  // Button mods
+  #define File_dlc_gamepad_ps3         "00_PS3Buttons.7z"
+  #define File_dlc_gamepad_gc          "00_GCButtons.7z"
+
+  // 4K texture pack (downloaded during install)
+  #define File_dlc_cleanup_4k_upscale  "99_Upscale4x.7z"
+  #define Link_dlc_cleanup_4k_upscale  "https://sk-data.special-k.info/TSFix/99_Upscale4x.7z"
 #endif
 
 #define SpecialKFileName  StringChange("SpecialK " + SpecialKModName + " " + SpecialKVersion, " ", "_")
@@ -280,29 +287,37 @@ function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   if CurPageID = wpReady then begin
 
-    // 4K texture pack
-    // Only download this one due to its large size (5 GB)         
+    // 4K texture pack (downloaded during install due to its 5 GB large size)
     if WizardIsTaskSelected('dlc_cleanup_4k_upscale') then
     begin
       Log('User selected dlc_cleanup_4k_upscale.');
 
-      Log('Downloading {#dlc_cleanup_4k_upscale_URL} as {#dlc_cleanup_4k_upscale_FileName} to ' + ExpandConstant('{tmp}'));
-      DownloadPage.Clear;
-      DownloadPage.Add('{#dlc_cleanup_4k_upscale_URL}', '{#dlc_cleanup_4k_upscale_FileName}', '');
-      DownloadPage.Show;
-      try
+      // Only download the file if it does not already exist
+      if FileExists(ExpandConstant('{app}\TSFix_Res\inject\{#File_dlc_cleanup_4k_upscale}')) then
+      begin
+        Log('Skipping download as {#File_dlc_cleanup_4k_upscale} already exists: ' + ExpandConstant('{app}\TSFix_Res\inject\{#File_dlc_cleanup_4k_upscale}'));
+        Result := True;
+      end
+      else
+      begin
+        Log('Downloading {#Link_dlc_cleanup_4k_upscale} as {#File_dlc_cleanup_4k_upscale} to ' + ExpandConstant('{tmp}'));
+        DownloadPage.Clear;
+        DownloadPage.Add('{#Link_dlc_cleanup_4k_upscale}', '{#File_dlc_cleanup_4k_upscale}', '');
+        DownloadPage.Show;
         try
-          DownloadPage.Download; // This downloads the files to {tmp}
-          Result := True;
-        except
-          if DownloadPage.AbortedByUser then
-            Log('Aborted by user.')
-          else
-            SuppressibleMsgBox(AddPeriod(GetExceptionMessage), mbCriticalError, MB_OK, IDOK);
-          Result := False;
+          try
+            DownloadPage.Download; // This downloads the files to {tmp}
+            Result := True;
+          except
+            if DownloadPage.AbortedByUser then
+              Log('Aborted by user.')
+            else
+              SuppressibleMsgBox(AddPeriod(GetExceptionMessage), mbCriticalError, MB_OK, IDOK);
+            Result := False;
+          end;
+        finally
+          DownloadPage.Hide;
         end;
-      finally
-        DownloadPage.Hide;
       end;
     end else
       Result := True;
@@ -405,16 +420,15 @@ end;
 [InstallDelete]
 Type: files;          Name: "{app}\Version\unins00*"
 ; Texture packs
-Type: files;          Name: "{app}\TSFix_Res\inject\97_UICleanup.7z";                          Tasks: not dlc_cleanup_ui;
-Type: files;          Name: "{app}\TSFix_Res\inject\98_Cleanup.7z";                            Tasks: not dlc_cleanup_effects;
-Type: files;          Name: "{app}\TSFix_Res\inject\98_CharactersCombined.7z";                 Tasks: not dlc_cleanup_characters;
-Type: files;          Name: "{app}\TSFix_Res\inject\01_CleanFont.7z";                          Tasks: not dlc_cleanup_font;
+Type: files;          Name: "{app}\TSFix_Res\inject\{#File_dlc_cleanup_ui}";            Tasks: not dlc_cleanup_ui;
+Type: files;          Name: "{app}\TSFix_Res\inject\{#File_dlc_cleanup_effects}";       Tasks: not dlc_cleanup_effects;
+Type: files;          Name: "{app}\TSFix_Res\inject\{#File_dlc_cleanup_characters}";    Tasks: not dlc_cleanup_characters;
+Type: files;          Name: "{app}\TSFix_Res\inject\{#File_dlc_cleanup_font}";          Tasks: not dlc_cleanup_font;
 ; Button mods        
-Type: files;          Name: "{app}\TSFix_Res\inject\00_GCButtons.7z";                          Tasks: not dlc_gamepad_gc;
-Type: files;          Name: "{app}\TSFix_Res\inject\00_PS3Buttons.7z";                         Tasks: not dlc_gamepad_ps3;
-Type: files;          Name: "{app}\TSFix_Res\inject\00_GCButtons.7z";                          Tasks: not dlc_gamepad_gc;
-; 4K texture pack 
-Type: files;          Name: "{app}\TSFix_Res\inject\{#dlc_cleanup_4k_upscale_FileName}.7z";    Tasks: not dlc_cleanup_4k_upscale;
+Type: files;          Name: "{app}\TSFix_Res\inject\{#File_dlc_gamepad_ps3}";           Tasks: not dlc_gamepad_ps3;
+Type: files;          Name: "{app}\TSFix_Res\inject\{#File_dlc_gamepad_gc}";            Tasks: not dlc_gamepad_gc;
+; 4K texture pack (downloaded during install) 
+Type: files;          Name: "{app}\TSFix_Res\inject\{#File_dlc_cleanup_4k_upscale}";    Tasks: not dlc_cleanup_4k_upscale;
 
 
 [Files]
@@ -444,34 +458,34 @@ Source: "{#SourceDir}\{#BackupFile}";                DestDir: "{app}";          
 #endif
 
 ; Texture packs
-Source: "{#SourceDir}\TSFix_Res\inject\97_UICleanup.7z";           DestDir: "{app}\TSFix_Res\inject";      Flags: ignoreversion skipifsourcedoesntexist;  Tasks: dlc_cleanup_ui;
-Source: "{#SourceDir}\TSFix_Res\inject\98_Cleanup.7z";             DestDir: "{app}\TSFix_Res\inject";      Flags: ignoreversion skipifsourcedoesntexist;  Tasks: dlc_cleanup_effects;
-Source: "{#SourceDir}\TSFix_Res\inject\98_CharactersCombined.7z";  DestDir: "{app}\TSFix_Res\inject";      Flags: ignoreversion skipifsourcedoesntexist;  Tasks: dlc_cleanup_characters;
-Source: "{#SourceDir}\TSFix_Res\inject\01_CleanFont.7z";           DestDir: "{app}\TSFix_Res\inject";      Flags: ignoreversion skipifsourcedoesntexist;  Tasks: dlc_cleanup_font;
+Source: "{#SourceDir}\TSFix_Res\inject\{#File_dlc_cleanup_ui}";           DestDir: "{app}\TSFix_Res\inject";      Flags: ignoreversion skipifsourcedoesntexist;           Tasks: dlc_cleanup_ui;
+Source: "{#SourceDir}\TSFix_Res\inject\{#File_dlc_cleanup_effects}";      DestDir: "{app}\TSFix_Res\inject";      Flags: ignoreversion skipifsourcedoesntexist;           Tasks: dlc_cleanup_effects;
+Source: "{#SourceDir}\TSFix_Res\inject\{#File_dlc_cleanup_characters}";   DestDir: "{app}\TSFix_Res\inject";      Flags: ignoreversion skipifsourcedoesntexist;           Tasks: dlc_cleanup_characters;
+Source: "{#SourceDir}\TSFix_Res\inject\{#File_dlc_cleanup_font}";         DestDir: "{app}\TSFix_Res\inject";      Flags: ignoreversion skipifsourcedoesntexist;           Tasks: dlc_cleanup_font;
 
 ; Button mods
-Source: "{#SourceDir}\TSFix_Res\inject\00_PS3Buttons.7z";          DestDir: "{app}\TSFix_Res\inject";      Flags: ignoreversion skipifsourcedoesntexist;  Tasks: dlc_gamepad_ps3;
-Source: "{#SourceDir}\TSFix_Res\inject\00_GCButtons.7z";           DestDir: "{app}\TSFix_Res\inject";      Flags: ignoreversion skipifsourcedoesntexist;  Tasks: dlc_gamepad_gc;
+Source: "{#SourceDir}\TSFix_Res\inject\{#File_dlc_gamepad_ps3}";          DestDir: "{app}\TSFix_Res\inject";      Flags: ignoreversion skipifsourcedoesntexist;           Tasks: dlc_gamepad_ps3;
+Source: "{#SourceDir}\TSFix_Res\inject\{#File_dlc_gamepad_gc}";           DestDir: "{app}\TSFix_Res\inject";      Flags: ignoreversion skipifsourcedoesntexist;           Tasks: dlc_gamepad_gc;
 
-; File downloaded during installation
-; 4K texture pack
-Source: "{tmp}\{#dlc_cleanup_4k_upscale_FileName}";  DestDir: "{app}\TSFix_Res\inject";      Flags: external ignoreversion skipifsourcedoesntexist;  Tasks: dlc_cleanup_4k_upscale;
+; 4K texture pack (downloaded during install)
+Source: "{tmp}\{#File_dlc_cleanup_4k_upscale}";                           DestDir: "{app}\TSFix_Res\inject";      Flags: external ignoreversion skipifsourcedoesntexist;  Tasks: dlc_cleanup_4k_upscale;
 
 ; [Dirs]
 ; Name: "{app}";          Permissions: users-modify
 
 
 [Tasks]
-Name: dlc_cleanup_4k_upscale;     Flags: unchecked;    GroupDescription: "General texture packs:";    Description: "4K upscaled textures (downloads 5 GB of additional data)";
-Name: dlc_cleanup_ui;             Flags: ;             GroupDescription: "General texture packs:";    Description: "Cleaned up UI";
-Name: dlc_cleanup_effects;        Flags: ;             GroupDescription: "General texture packs:";    Description: "Cleaned up cloud and visual effects";
-Name: dlc_cleanup_characters;     Flags: ;             GroupDescription: "General texture packs:";    Description: "Cleaned up characters"; 
-Name: dlc_cleanup_font;           Flags: ;             GroupDescription: "General texture packs:";    Description: "Cleaned up font";
+; Texture packs
+Name: dlc_cleanup_4k_upscale;     Flags: unchecked;              GroupDescription: "General texture packs:";    Description: "4K upscaled textures (downloads 5 GB of additional data)";
+Name: dlc_cleanup_ui;             Flags: ;                       GroupDescription: "General texture packs:";    Description: "Cleaned up UI";
+Name: dlc_cleanup_effects;        Flags: ;                       GroupDescription: "General texture packs:";    Description: "Cleaned up cloud and visual effects";
+Name: dlc_cleanup_characters;     Flags: ;                       GroupDescription: "General texture packs:";    Description: "Cleaned up characters"; 
+Name: dlc_cleanup_font;           Flags: ;                       GroupDescription: "General texture packs:";    Description: "Cleaned up font";
 
 ; The Xbox buttons are a part of the game, so if that task is checked we just remove the other button mods
-Name: dlc_gamepad_xbox;           Flags: exclusive;              GroupDescription: "Button mods:";    Description: "Xbox";                              
-Name: dlc_gamepad_ps3;            Flags: unchecked exclusive;    GroupDescription: "Button mods:";    Description: "Playstation 3";
-Name: dlc_gamepad_gc;             Flags: unchecked exclusive;    GroupDescription: "Button mods:";    Description: "GameCube";
+Name: dlc_gamepad_xbox;           Flags: exclusive;              GroupDescription: "Button prompts:";           Description: "Xbox";                        
+Name: dlc_gamepad_ps3;            Flags: unchecked exclusive;    GroupDescription: "Button prompts:";           Description: "Playstation 3";
+Name: dlc_gamepad_gc;             Flags: unchecked exclusive;    GroupDescription: "Button prompts:";           Description: "GameCube";
 
 
 [Run]
