@@ -1,0 +1,12 @@
+﻿Uses Dege's excellent 32-bit D3D9 API implementation of dgVoodoo 2 to translate the game to Direct3D 11 and promote it to modern flip presentation model.
+
+dgVoodoo 2.81.3 is provided as dgVoodoo.dll and proxy loaded by Special K alongside the TSFix plugin.
+
+http://dege.fw.hu/
+https://github.com/dege-diosg/dgVoodoo2
+
+dgVoodoo 2 (c) 2013-2023 Dege
+
+——————
+
+Special K v 0.6.27 is GPL-3.0 licensed - https://github.com/SpecialKO/SpecialK
