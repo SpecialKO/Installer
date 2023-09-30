@@ -29,9 +29,9 @@
 ArchitecturesInstallIn64BitMode    = x64
 ArchitecturesAllowed               = x86 x64
 ; Windows 8.1
-MinVersion                         = 6.3.9600
+; MinVersion                         = 6.3.9600
 ; Windows 7 SP1
-;MinVersion                        = 6.1sp1
+MinVersion                        = 6.1sp1
 AppId                              = {{F4A43527-9457-424A-90A6-17CF02ACF677}
 AppName                            = {#SpecialKName}
 AppVersion                         = {#SpecialKVersion}  
