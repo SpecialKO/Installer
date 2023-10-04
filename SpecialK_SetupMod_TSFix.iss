@@ -20,7 +20,7 @@
   #define SpecialKUninstID  "{{947863C3-EB5E-4496-995D-17EDABCD580D}"
   #define SpecialKGameName  "Tales of Symphonia"
   #define SpecialKModName   "TSFix"
-  #define SpecialKVersion   GetStringFileInfo(SourceDir + '\d3d9.dll', "ProductVersion")
+  #define SpecialKVersion   GetStringFileInfo(SourceDir + '\tsfix.dll', "ProductVersion")
   #define SpecialKHelpURL   "https://wiki.special-k.info/en/SpecialK/Custom/TSFix"
   #define BackupFile        "TOS.exe"
 
