@@ -39,7 +39,8 @@
   #define Link_dlc_cleanup_4k_upscale  "https://sk-data.special-k.info/TSFix/99_Upscale4x.7z"
 #endif
 
-#define SpecialKFileName  StringChange("SpecialK " + SpecialKModName + " " + SpecialKVersion, " ", "_")
+#define SpecialKFileName  StringChange("SpecialK " + SpecialKModName + " " + SpecialKVersion, " ", "_") 
+#define MusicFileName     "techno_stargazev2.1loop.mp3"
 
 #include "SpecialK_Shared.iss"
 
@@ -191,65 +192,24 @@ begin
 
   // Sets up the download page
   DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), SetupMessage(msgPreparingDesc), @OnDownloadProgress);
-
-  if not WizardSilent() then
-  begin 
-    Log('Preparing music components.');
-    // Some nice background tunes
-    MusicPlayback := false;
-    ExtractTemporaryFile('techno_stargazev2.1loop.mp3');
-    mciSendString(ExpandConstant('open "{tmp}/techno_stargazev2.1loop.mp3" alias soundbg'), 0, 0, 0);
-    //mciSendString('play soundbg repeat', 0, 0, 0);
-    mciSendString('setaudio soundbg volume to 125', 0, 0, 0);
-
-    ToggleMusicButton         := TNewButton.Create(WizardForm);
-    ToggleMusicButton.Parent  := WizardForm;
-    ToggleMusicButton.Left    :=
-      WizardForm.ClientWidth -
-      WizardForm.CancelButton.Left - 
-      WizardForm.CancelButton.Width;
-    ToggleMusicButton.Top     := WizardForm.CancelButton.Top; //WizardForm.CancelButton.Top + 50;
-    ToggleMusicButton.Width   := WizardForm.CancelButton.Width;
-    ToggleMusicButton.Height  := WizardForm.CancelButton.Height;
-    ToggleMusicButton.Caption := 'Play Music';
-    ToggleMusicButton.OnClick := @ToggleButtonClick;
-    ToggleMusicButton.Anchors := [akLeft, akBottom];
-
-    CreditMusicButton         := TNewButton.Create(WizardForm);
-    CreditMusicButton.Parent  := WizardForm;
-    CreditMusicButton.Left    :=
-      WizardForm.ClientWidth -
-      WizardForm.NextButton.Left -
-      WizardForm.NextButton.Width;
-    CreditMusicButton.Top     := WizardForm.NextButton.Top; //WizardForm.CancelButton.Top + 50;
-    CreditMusicButton.Width   := WizardForm.NextButton.Width;
-    CreditMusicButton.Height  := WizardForm.NextButton.Height;
-    CreditMusicButton.Caption := 'Music By';
-    CreditMusicButton.OnClick := @CreditButtonClick;
-    CreditMusicButton.Anchors := [akLeft, akBottom];
-  end;
-  
+ 
   DisplayWidth  := GetSystemMetrics(SM_CXSCREEN);
   DisplayHeight := GetSystemMetrics(SM_CYSCREEN);
 
   Log(Format('Primary display resolution: %dx%d', [DisplayWidth, DisplayHeight]));
+
+  if not WizardSilent() then
+  begin
+    // Do things when not silent
+  end;
+   
+  InitializeMusicPlayback('{#MusicFileName}');
 end;
 
 
 procedure DeinitializeSetup();
-begin
-  if not WizardSilent() then
-  begin 
-    Log('Cleaning up music components.');
-    if MusicPlayback then
-    begin
-      // Stop music playback if it's currently playing
-      mciSendString(ExpandConstant('stop soundbg'), 0, 0, 0);
-      MusicPlayback := false;
-    end;
-    // Close the MCI device
-    mciSendString(ExpandConstant('close all'), 0, 0, 0);
-  end;
+begin 
+  DeinitializeMusicPlayback();
 end;
 
 

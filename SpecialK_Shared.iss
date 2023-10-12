@@ -29,6 +29,7 @@ var
   WbemLocator       : Variant;
   WbemServices      : Variant;
   MusicPlayback     : Boolean;
+  MusicAvailable    : Boolean;
   LocPLUGroupName   : String;
   LocINTUserName    : String;
   ToggleMusicButton : TNewButton;
@@ -52,7 +53,7 @@ function GetWindow     (hWnd: HWND;    uCmd: Cardinal)                    : HWND
 function GetLastError                                                     : Cardinal; external 'GetLastError@kernel32.dll stdcall';
 
 // Used to play background music during installation
-function mciSendString(lpstrCommand: String; lpstrReturnString: Integer; uReturnLength: Cardinal; hWndCallback: HWND): Cardinal; external 'mciSendStringW@winmm.dll stdcall';
+function mciSendString (lpstrCommand: String; lpstrReturnString: Integer; uReturnLength: Cardinal; hWndCallback: HWND): Cardinal; external 'mciSendStringW@winmm.dll stdcall';
 
 
 // -----------
@@ -60,7 +61,7 @@ function mciSendString(lpstrCommand: String; lpstrReturnString: Integer; uReturn
 // -----------
 
 // Used to check for the presence of cmd line switches
-function SwitchHasValue(Name: string; Value: string; DefaultValue: string): Boolean;
+function SwitchHasValue(Name: String; Value: String; DefaultValue: String): Boolean;
 begin
   Result := CompareText(ExpandConstant('{param:' + Name + '|' + DefaultValue + '}'), Value) = 0;
 end;
@@ -88,17 +89,20 @@ end;
 // This is called by the OnClick handler of a button
 procedure ToggleButtonClick(Sender: TObject);
 begin
-  if MusicPlayback then
+  if MusicAvailable then
   begin
-    mciSendString('stop soundbg', 0, 0, 0);
-    MusicPlayback := false;
-    ToggleMusicButton.Caption := 'Play Music';
-  end
-  else
-  begin
-    mciSendString('play soundbg repeat', 0, 0, 0);
-    MusicPlayback := true;
-    ToggleMusicButton.Caption := 'Stop Music';
+    if MusicPlayback then
+    begin
+      mciSendString('stop soundbg', 0, 0, 0);
+      MusicPlayback := false;
+      ToggleMusicButton.Caption := 'Play Music';
+    end
+    else
+    begin
+      mciSendString('play soundbg repeat', 0, 0, 0);
+      MusicPlayback := true;
+      ToggleMusicButton.Caption := 'Stop Music';
+    end;
   end;
 end;
 
@@ -108,6 +112,82 @@ var
   ErrorCode: Integer;
 begin
   ShellExec('', 'https://opengameart.org/content/stargazer', '', '', SW_SHOW, ewNoWait, ErrorCode);
+end;
+
+function InitializeMusicPlayback(FileName: String): Boolean;
+begin
+  if not WizardSilent() then
+  begin 
+    // Some nice background tunes
+    Log('Preparing music components.');
+    try
+      MusicPlayback  := false;
+      MusicAvailable := false;
+      ExtractTemporaryFile(FileName);
+
+      // Open the track
+      if (0 = mciSendString(ExpandConstant('open "{tmp}/' + FileName + '" alias soundbg'), 0, 0, 0)) then
+      begin
+
+        // Adjust the volume
+        if (0 = mciSendString('setaudio soundbg volume to 125', 0, 0, 0)) then
+        begin
+
+          // Create the UI elements
+          ToggleMusicButton         := TNewButton.Create(WizardForm);
+          ToggleMusicButton.Parent  := WizardForm;
+          ToggleMusicButton.Left    :=
+            WizardForm.ClientWidth -
+            WizardForm.CancelButton.Left - 
+            WizardForm.CancelButton.Width;
+          ToggleMusicButton.Top     := WizardForm.CancelButton.Top; //WizardForm.CancelButton.Top + 50;
+          ToggleMusicButton.Width   := WizardForm.CancelButton.Width;
+          ToggleMusicButton.Height  := WizardForm.CancelButton.Height;
+          ToggleMusicButton.Caption := 'Play Music';
+          ToggleMusicButton.OnClick := @ToggleButtonClick;
+          ToggleMusicButton.Anchors := [akLeft, akBottom];
+
+          CreditMusicButton         := TNewButton.Create(WizardForm);
+          CreditMusicButton.Parent  := WizardForm;
+          CreditMusicButton.Left    :=
+            WizardForm.ClientWidth -
+            WizardForm.NextButton.Left -
+            WizardForm.NextButton.Width;
+          CreditMusicButton.Top     := WizardForm.NextButton.Top; //WizardForm.CancelButton.Top + 50;
+          CreditMusicButton.Width   := WizardForm.NextButton.Width;
+          CreditMusicButton.Height  := WizardForm.NextButton.Height;
+          CreditMusicButton.Caption := 'Music By';
+          CreditMusicButton.OnClick := @CreditButtonClick;
+          CreditMusicButton.Anchors := [akLeft, akBottom];
+
+          // If everything worked so far
+          MusicAvailable := true;
+        end;
+      end;
+    except
+      Log('Failed initializing music components: ' + AddPeriod(GetExceptionMessage));
+    end;
+  end;
+end;
+
+function DeinitializeMusicPlayback: Boolean;
+begin
+  if not WizardSilent() and MusicAvailable then
+  begin 
+    Log('Cleaning up music components.');
+    try
+      if MusicPlayback then
+      begin
+        // Stop music playback if it's currently playing
+        mciSendString('stop soundbg', 0, 0, 0);
+        MusicPlayback := false;
+      end;
+      // Close the MCI device
+      mciSendString('close all', 0, 0, 0);
+    except
+      Log('Failed deinitializing music components: ' + AddPeriod(GetExceptionMessage));
+    end;
+  end;
 end;
 
 

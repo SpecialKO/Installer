@@ -16,6 +16,7 @@
 #define AssetsDir         "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
 #define SpecialKVersion   GetStringFileInfo(SourceDir + '\SpecialK64.dll', "ProductVersion") ; ProductVersion
 #define SKIFVersion       GetStringFileInfo(SourceDir + '\SKIF.exe',       "ProductVersion")
+#define MusicFileName     "techno_stargazev2.1loop.mp3"
 
 #include "SpecialK_Shared.iss"
 
@@ -142,58 +143,15 @@ begin
 
     // Have the disk spacel label appear here instead of later
     WizardForm.DiskSpaceLabel.Parent := PageFromID(wpWelcome).Surface;
-
-    Log('Preparing music components.');
-    // Some nice background tunes
-    MusicPlayback := false;
-    ExtractTemporaryFile('techno_stargazev2.1loop.mp3');
-    mciSendString(ExpandConstant('open "{tmp}/techno_stargazev2.1loop.mp3" alias soundbg'), 0, 0, 0);
-    //mciSendString('play soundbg repeat', 0, 0, 0);
-    mciSendString('setaudio soundbg volume to 125', 0, 0, 0);
-
-    ToggleMusicButton         := TNewButton.Create(WizardForm);
-    ToggleMusicButton.Parent  := WizardForm;
-    ToggleMusicButton.Left    :=
-      WizardForm.ClientWidth -
-      WizardForm.CancelButton.Left - 
-      WizardForm.CancelButton.Width;
-    ToggleMusicButton.Top     := WizardForm.CancelButton.Top; //WizardForm.CancelButton.Top + 50;
-    ToggleMusicButton.Width   := WizardForm.CancelButton.Width;
-    ToggleMusicButton.Height  := WizardForm.CancelButton.Height;
-    ToggleMusicButton.Caption := 'Play Music';
-    ToggleMusicButton.OnClick := @ToggleButtonClick;
-    ToggleMusicButton.Anchors := [akLeft, akBottom];
-
-    CreditMusicButton         := TNewButton.Create(WizardForm);
-    CreditMusicButton.Parent  := WizardForm;
-    CreditMusicButton.Left    :=
-      WizardForm.ClientWidth -
-      WizardForm.NextButton.Left -
-      WizardForm.NextButton.Width;
-    CreditMusicButton.Top     := WizardForm.NextButton.Top; //WizardForm.CancelButton.Top + 50;
-    CreditMusicButton.Width   := WizardForm.NextButton.Width;
-    CreditMusicButton.Height  := WizardForm.NextButton.Height;
-    CreditMusicButton.Caption := 'Music By';
-    CreditMusicButton.OnClick := @CreditButtonClick;
-    CreditMusicButton.Anchors := [akLeft, akBottom];
   end;
+     
+  InitializeMusicPlayback('{#MusicFileName}');
 end;
 
 
 procedure DeinitializeSetup();
 begin
-  if not WizardSilent() then
-  begin 
-    Log('Cleaning up music components.');
-    if MusicPlayback then
-    begin
-      // Stop music playback if it's currently playing
-      mciSendString(ExpandConstant('stop soundbg'), 0, 0, 0);
-      MusicPlayback := false;
-    end;
-    // Close the MCI device
-    mciSendString(ExpandConstant('close all'), 0, 0, 0);
-  end;
+  DeinitializeMusicPlayback();
 end;
 
 
@@ -559,7 +517,7 @@ Root: HKCU; Subkey: "SOFTWARE\Kaldaien";                                        
 
 ; Temporary files that are extracted as needed
 Source: "{#RedistDir}\Unregister-AppInitDLLs.ps1";   DestDir: {tmp};            Flags: dontcopy;
-Source: "{#AssetsDir}\techno_stargazev2.1loop.mp3";  DestDir: {tmp};            Flags: dontcopy;
+Source: "{#AssetsDir}\{#MusicFileName}";             DestDir: {tmp};            Flags: dontcopy;
 
 ; Main Special K files should always be overwritten
 Source: "{#SourceDir}\SKIF.exe";                     DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64;
@@ -570,8 +528,6 @@ Source: "{#SourceDir}\SpecialK64.dll";               DestDir: "{app}";          
 Source: "{#SourceDir}\SpecialK64.pdb";               DestDir: "{app}";          Flags: ignoreversion skipifsourcedoesntexist;    Check: IsWin64;
 Source: "{#SourceDir}\Servlet\SKIFsvc64.exe";        DestDir: "{app}\Servlet";  Flags: ignoreversion;                            Check: IsWin64;
 Source: "{#SourceDir}\Servlet\*";                    DestDir: "{app}\Servlet";  Flags: ignoreversion;  Excludes: "SKIFsvc64.exe"  
-;Source: "{#SourceDir}\SpecialK32-AVX2.dll";          DestDir: "{app}";          Flags: ignoreversion;
-;Source: "{#SourceDir}\SpecialK64-AVX2.dll";          DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64; 
 
 ; Remaining files should only be created if they do not exist already.
 ; NOTE: This line causes the files included above to be counted twice in DiskSpaceMBLabel

@@ -8,10 +8,10 @@
 ;#define TBFix
 
 ; Tales of Vesperia
-#define TVFix
+;#define TVFix
 
 ; Final Fantasy X|X-2 HD Remaster
-;#define UnX
+#define UnX
 
 #define SpecialKName      "Special K"
 #define SpecialKPublisher "The Special K Group"
@@ -73,6 +73,7 @@
 #endif
 
 #define SpecialKFileName  StringChange("SpecialK " + SpecialKModName + " " + SpecialKVersion, " ", "_")
+#define MusicFileName     "techno_stargazev2.1loop.mp3"
 
 #include "SpecialK_Shared.iss"
 
@@ -207,58 +208,17 @@ begin
   DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), SetupMessage(msgPreparingDesc), @OnDownloadProgress);
 
   if not WizardSilent() then
-  begin 
-    Log('Preparing music components.');
-    // Some nice background tunes
-    MusicPlayback := false;
-    ExtractTemporaryFile('techno_stargazev2.1loop.mp3');
-    mciSendString(ExpandConstant('open "{tmp}/techno_stargazev2.1loop.mp3" alias soundbg'), 0, 0, 0);
-    //mciSendString('play soundbg repeat', 0, 0, 0);
-    mciSendString('setaudio soundbg volume to 125', 0, 0, 0);
-
-    ToggleMusicButton         := TNewButton.Create(WizardForm);
-    ToggleMusicButton.Parent  := WizardForm;
-    ToggleMusicButton.Left    :=
-      WizardForm.ClientWidth -
-      WizardForm.CancelButton.Left - 
-      WizardForm.CancelButton.Width;
-    ToggleMusicButton.Top     := WizardForm.CancelButton.Top; //WizardForm.CancelButton.Top + 50;
-    ToggleMusicButton.Width   := WizardForm.CancelButton.Width;
-    ToggleMusicButton.Height  := WizardForm.CancelButton.Height;
-    ToggleMusicButton.Caption := 'Play Music';
-    ToggleMusicButton.OnClick := @ToggleButtonClick;
-    ToggleMusicButton.Anchors := [akLeft, akBottom];
-
-    CreditMusicButton         := TNewButton.Create(WizardForm);
-    CreditMusicButton.Parent  := WizardForm;
-    CreditMusicButton.Left    :=
-      WizardForm.ClientWidth -
-      WizardForm.NextButton.Left -
-      WizardForm.NextButton.Width;
-    CreditMusicButton.Top     := WizardForm.NextButton.Top; //WizardForm.CancelButton.Top + 50;
-    CreditMusicButton.Width   := WizardForm.NextButton.Width;
-    CreditMusicButton.Height  := WizardForm.NextButton.Height;
-    CreditMusicButton.Caption := 'Music By';
-    CreditMusicButton.OnClick := @CreditButtonClick;
-    CreditMusicButton.Anchors := [akLeft, akBottom];
+  begin
+    // Do things when not silent
   end;
+   
+  InitializeMusicPlayback('{#MusicFileName}');
 end;
 
 
 procedure DeinitializeSetup();
 begin
-  if not WizardSilent() then
-  begin 
-    Log('Cleaning up music components.');
-    if MusicPlayback then
-    begin
-      // Stop music playback if it's currently playing
-      mciSendString(ExpandConstant('stop soundbg'), 0, 0, 0);
-      MusicPlayback := false;
-    end;
-    // Close the MCI device
-    mciSendString(ExpandConstant('close all'), 0, 0, 0);
-  end;
+  DeinitializeMusicPlayback();
 end;
 
 
@@ -464,7 +424,7 @@ Type: files;          Name: "{app}\Version\unins00*"
 ; This can result in a substantial delay if a number of other files are listed above the specified file in the [Files] section.
 
 ; Temporary files that are extracted as needed
-Source: "{#AssetsDir}\techno_stargazev2.1loop.mp3";  DestDir: {tmp};            Flags: dontcopy;
+Source: "{#AssetsDir}\{#MusicFileName}";             DestDir: {tmp};            Flags: dontcopy;
 
 ; Main mod files should always be overwritten.
 ; NOTE: This line causes any files included above to be counted twice in DiskSpaceMBLabel
