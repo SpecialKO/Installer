@@ -8,10 +8,10 @@
 ;#define TBFix
 
 ; Tales of Vesperia
-;#define TVFix
+#define TVFix
 
 ; Final Fantasy X|X-2 HD Remaster
-#define UnX
+;#define UnX
 
 #define SpecialKName      "Special K"
 #define SpecialKPublisher "The Special K Group"
@@ -105,7 +105,7 @@ UsePreviousAppDir                  = no
 DisableDirPage                     = no
 DefaultGroupName                   = {#SpecialKName}
 DisableProgramGroupPage            = yes
-LicenseFile                        = {#AssetsDir}\LICENSE.txt
+LicenseFile                        = {#AssetsDir}\LICENSE_{#SpecialKModName}.txt
 PrivilegesRequired                 = lowest
 PrivilegesRequiredOverridesAllowed = commandline
 OutputDir                          = {#OutputDir}
@@ -133,7 +133,7 @@ SetupAppTitle    ={#SpecialKName} Setup
 SetupWindowTitle ={#SpecialKName} ({#SpecialKModName}) v {#SpecialKVersion} for {#SpecialKGameName}
 UninstallAppTitle={#SpecialKName} Uninstall
 WelcomeLabel2    =This will install {#SpecialKName} ({#SpecialKModName}) v {#SpecialKVersion} for {#SpecialKGameName} on your computer.%n%nLovingly referred to as the Swiss Army Knife of PC gaming, Special K does a bit of everything. It is best known for fixing and enhancing graphics, its many detailed performance analysis and correction mods, and a constantly growing palette of tools that solve a wide variety of issues affecting PC games.%n%nIt is recommended that you close all other applications before continuing.
-ConfirmUninstall =Are you sure you want to completely remove %1 and all of its components?%n%nThis will also remove any Special K ({#SpecialKModName}) game data (screenshots, texture packs, configs).  
+ConfirmUninstall =Are you sure you want to completely remove %1 and all of its components?%n%nThis may also remove any Special K ({#SpecialKModName}) game data (texture packs, configs, etc).  
 DiskSpaceMBLabel =
 
 [Code]
@@ -431,7 +431,7 @@ Source: "{#AssetsDir}\{#MusicFileName}";             DestDir: {tmp};            
 Source: "{#SourceDir}\*";                            DestDir: "{app}";          Flags: ignoreversion recursesubdirs createallsubdirs; {#if Defined BackupFile} Excludes: "{#BackupFile}" {#endif}
 
 #if Defined BackupFile
-Source: "{app}\{#BackupFile}";                       DestDir: "{app}";          Flags: external skipifsourcedoesntexist uninsneveruninstall; DestName: "{#BackupFile}.bak"; Tasks: downgrade;
+Source: "{app}\{#BackupFile}";                       DestDir: "{app}";          Flags: external skipifsourcedoesntexist onlyifdoesntexist uninsneveruninstall; DestName: "{#BackupFile}.bak"; Tasks: downgrade;
 
 ; File bundled in the installer
 Source: "{#SourceDir}\{#BackupFile}";                DestDir: "{app}";          Flags: ignoreversion skipifsourcedoesntexist;          Tasks: downgrade;
