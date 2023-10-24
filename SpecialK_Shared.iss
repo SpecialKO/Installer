@@ -116,6 +116,8 @@ end;
 
 function InitializeMusicPlayback(FileName: String): Boolean;
 begin
+  Result := false;
+
   if not WizardSilent() then
   begin 
     // Some nice background tunes
@@ -162,6 +164,7 @@ begin
 
           // If everything worked so far
           MusicAvailable := true;
+          Result := true;
         end;
       end;
     except
@@ -172,6 +175,8 @@ end;
 
 function DeinitializeMusicPlayback: Boolean;
 begin
+  Result := false;
+
   if not WizardSilent() and MusicAvailable then
   begin 
     Log('Cleaning up music components.');
@@ -184,6 +189,7 @@ begin
       end;
       // Close the MCI device
       mciSendString('close all', 0, 0, 0);
+      Result := true;
     except
       Log('Failed deinitializing music components: ' + AddPeriod(GetExceptionMessage));
     end;
