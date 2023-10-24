@@ -553,8 +553,17 @@ Name:     "{userdocs}\My Mods\Special K";  Filename: "{app}";
 [Run]
 ; Checked by default
 
+; Normal install
 Filename: "{app}\{#SpecialKExeName}";               Description: "{cm:LaunchProgram,{#StringChange(SpecialKName, '&', '&&')}}"; \
-  Flags: nowait postinstall runasoriginaluser;      Check: SwitchHasValue('LaunchSKIF', 'true', 'true');
+  Flags: nowait postinstall runasoriginaluser skipifsilent;                                    Check: SwitchHasValue('LaunchSKIF', 'true', 'true');
+
+; Silent install
+Filename: "{app}\{#SpecialKExeName}";               Description: "{cm:LaunchProgram,{#StringChange(SpecialKName, '&', '&&')}}"; \
+  Flags: nowait postinstall runasoriginaluser skipifnotsilent;                                 Check: SwitchHasValue('StartService', '0', '0');
+
+; Silent install + autostart the injection service
+Filename: "{app}\{#SpecialKExeName}";               Description: "{cm:LaunchProgram,{#StringChange(SpecialKName, '&', '&&')}}"; \
+  Flags: nowait postinstall runasoriginaluser skipifnotsilent;   Parameters: "Start";          Check: SwitchHasValue('StartService', '1', '0');
 
 Filename: "{#SpecialKHelpURL}";                     Description: "Open the wiki"; \
   Flags: shellexec nowait postinstall skipifsilent unchecked
