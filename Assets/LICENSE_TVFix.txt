@@ -1,0 +1,3 @@
+﻿GPL-3.0 licensed:
+Special K v 23.9.10.5 - https://github.com/SpecialKO/SpecialK
+    TVFix v 0.5.2.5   - https://github.com/SpecialKO/SpecialK/blob/main/src/plugins/tales_of_vesperia.cpp

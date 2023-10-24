@@ -1,0 +1,3 @@
+﻿GPL-3.0 licensed:
+Special K v 0.7.37   - https://github.com/SpecialKO/SpecialK
+    TBFix v 0.10.2.2 - https://github.com/Kaldaien/TBF
