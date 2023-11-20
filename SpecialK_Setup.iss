@@ -559,11 +559,19 @@ Filename: "{app}\{#SpecialKExeName}";               Description: "{cm:LaunchProg
 
 ; Silent install
 Filename: "{app}\{#SpecialKExeName}";               Description: "{cm:LaunchProgram,{#StringChange(SpecialKName, '&', '&&')}}"; \
-  Flags: nowait postinstall runasoriginaluser skipifnotsilent;                                 Check: SwitchHasValue('StartService', '0', '0');
+  Flags: nowait postinstall runasoriginaluser skipifnotsilent;                                 Check: SwitchHasValue('StartService', '0', '0') and SwitchHasValue('StartMinimized', '0', '0');
 
-; Silent install + autostart the injection service
+; Silent install + minimize
 Filename: "{app}\{#SpecialKExeName}";               Description: "{cm:LaunchProgram,{#StringChange(SpecialKName, '&', '&&')}}"; \
-  Flags: nowait postinstall runasoriginaluser skipifnotsilent;   Parameters: "Start";          Check: SwitchHasValue('StartService', '1', '0');
+  Flags: nowait postinstall runasoriginaluser skipifnotsilent;   Parameters: "Minimize";       Check: SwitchHasValue('StartService', '0', '0') and SwitchHasValue('StartMinimized', '1', '0');
+
+; Silent install + autostart
+Filename: "{app}\{#SpecialKExeName}";               Description: "{cm:LaunchProgram,{#StringChange(SpecialKName, '&', '&&')}}"; \
+  Flags: nowait postinstall runasoriginaluser skipifnotsilent;   Parameters: "Start";          Check: SwitchHasValue('StartService', '1', '0') and SwitchHasValue('StartMinimized', '0', '0');
+
+; Silent install + autostart + minimize
+Filename: "{app}\{#SpecialKExeName}";               Description: "{cm:LaunchProgram,{#StringChange(SpecialKName, '&', '&&')}}"; \
+  Flags: nowait postinstall runasoriginaluser skipifnotsilent;   Parameters: "Start Minimize"; Check: SwitchHasValue('StartService', '1', '0') and SwitchHasValue('StartMinimized', '1', '0');
 
 Filename: "{#SpecialKHelpURL}";                     Description: "Open the wiki"; \
   Flags: shellexec nowait postinstall skipifsilent unchecked
