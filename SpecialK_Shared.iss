@@ -829,6 +829,26 @@ end;
 
 
 // -----------
+// Check if contant folders can be expanded
+// -----------
+function TryExpandConstant(ConstantFolder: String): Boolean;
+var
+  Folder: String;
+
+begin
+  try
+    // Test if we can expand the userdocs constant and if it exists
+    Folder := ExpandConstant('{' + ConstantFolder + '}');
+    if DirExists(Folder) then
+      Result := true;
+  except
+    Log('Failed to expand userdocs constant: ' + AddPeriod(GetExceptionMessage));
+  end;
+end;
+
+
+
+// -----------
 // Procedure to extract a ZIP archive
 // -----------
 // CC BY-SA 4.0: https://stackoverflow.com/a/40706549/15133327

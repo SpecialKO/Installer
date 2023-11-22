@@ -526,8 +526,10 @@ Source: "{#SourceDir}\SpecialK32.dll";               DestDir: "{app}";          
 Source: "{#SourceDir}\SpecialK32.pdb";               DestDir: "{app}";          Flags: ignoreversion skipifsourcedoesntexist;
 Source: "{#SourceDir}\SpecialK64.dll";               DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64;
 Source: "{#SourceDir}\SpecialK64.pdb";               DestDir: "{app}";          Flags: ignoreversion skipifsourcedoesntexist;    Check: IsWin64;
-Source: "{#SourceDir}\Servlet\SKIFsvc64.exe";        DestDir: "{app}\Servlet";  Flags: ignoreversion;                            Check: IsWin64;
-Source: "{#SourceDir}\Servlet\*";                    DestDir: "{app}\Servlet";  Flags: ignoreversion;  Excludes: "SKIFsvc64.exe"  
+
+; Service hosts should only be replaced if they are different
+Source: "{#SourceDir}\Servlet\SKIFsvc64.exe";        DestDir: "{app}\Servlet";  Flags: ;                                         Check: IsWin64;
+Source: "{#SourceDir}\Servlet\SKIFsvc32.exe";        DestDir: "{app}\Servlet";  Flags: ;  
 
 ; Remaining files should only be created if they do not exist already.
 ; NOTE: This line causes the files included above to be counted twice in DiskSpaceMBLabel
@@ -547,7 +549,7 @@ Name: startmenu;     Description: "Create start menu shortcut";
 [Icons]
 Name: "{autoprograms}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: startmenu
 Name:  "{autodesktop}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: desktopicon
-Name:     "{userdocs}\My Mods\Special K";  Filename: "{app}";
+Name:     "{userdocs}\My Mods\Special K";  Filename: "{app}";                       Check: TryExpandConstant('userdocs');
 
 
 [Run]
