@@ -829,20 +829,24 @@ end;
 
 
 // -----------
-// Check if contant folders can be expanded
+// Check if contants can be expanded successfully
 // -----------
 function TryExpandConstant(ConstantFolder: String): Boolean;
 var
   Folder: String;
 
 begin
+  Result := false;
+
   try
     // Test if we can expand the userdocs constant and if it exists
     Folder := ExpandConstant('{' + ConstantFolder + '}');
     if DirExists(Folder) then
+    begin
       Result := true;
+    end;
   except
-    Log('Failed to expand userdocs constant: ' + AddPeriod(GetExceptionMessage));
+    Log('Failed to expand constant: ' + AddPeriod(GetExceptionMessage));
   end;
 end;
 

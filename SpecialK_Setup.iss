@@ -627,5 +627,5 @@ Type: filesandordirs; Name: "{app}\ReadMe"
 Type: filesandordirs; Name: "{app}\Servlet"
 Type: filesandordirs; Name: "{app}\Version"
 Type: dirifempty;     Name: "{app}"  
-Type: dirifempty;     Name: "{userdocs}\My Mods"
+Type: dirifempty;     Name: "{userdocs}\My Mods";  Check: TryExpandConstant('userdocs');
 
