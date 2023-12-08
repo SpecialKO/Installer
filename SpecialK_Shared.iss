@@ -800,15 +800,15 @@ end;
 function IsKernelDriverInstalled(): Boolean;
 var
   WbemObjectSet : Variant;
-  InstallFolder : String;
+  //InstallFolder : String;
     
 begin
-  InstallFolder := ExtractFileName(RemoveBackslashUnlessRoot(ExpandConstant('{app}')));
+  //InstallFolder := ExtractFileName(RemoveBackslashUnlessRoot(ExpandConstant('{app}')));
 
-  if Length(InstallFolder) = 0 then
-  begin
-    InstallFolder := 'SpecialK';
-  end;  
+  //if Length(InstallFolder) = 0 then
+  //begin
+  //  InstallFolder := 'SpecialK';
+  //end;
 
   try
     if InitializeWMI() then
