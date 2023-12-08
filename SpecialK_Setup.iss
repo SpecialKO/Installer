@@ -456,7 +456,7 @@ begin
 
     if IsKernelDriver then
     begin
-      PowerShellArgs := PowerShellArgs + 'Stop-Service -Name ''SK_WinRing0''; sc.exe delete ''SK_WinRing0''; ';
+      PowerShellArgs := PowerShellArgs + 'sc.exe stop ''SK_WinRing0''; sc.exe delete ''SK_WinRing0''; ';
     end;
 
     if (IsSKIFAutoStart) or (IsKernelDriver) then
