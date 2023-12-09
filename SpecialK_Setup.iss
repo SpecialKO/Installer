@@ -440,6 +440,7 @@ begin
     if IsKernelDriver then
     begin
       Log('Kernel driver check : installed');
+      DriverUninstStr := RemoveQuotes(DriverUninstStr);
       Log('Uninstall string : ' + DriverUninstStr);
     end;
 
@@ -459,7 +460,7 @@ begin
 
     if IsKernelDriver then
     begin
-      if FileExists(RemoveQuotes(DriverUninstStr)) then
+      if FileExists(DriverUninstStr) then
       begin
         UninstallProgressForm.StatusLabel.Caption := 'Uninstalling Special K Extended Hardware Monitoring Driver...';
         Log('Uninstalling the Special K Extended Hardware Monitoring Driver package.');
