@@ -7,6 +7,12 @@
 
 
 ; -----------
+; SHARED DEFINITIONS
+; -----------
+#define SKIFdrvUninstID  "{A459BBFA-0819-49C4-8BF7-5BDF1559ED0C}"
+
+
+; -----------
 ; SHARED CODE
 ; -----------
 [Code]

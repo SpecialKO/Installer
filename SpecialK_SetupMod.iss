@@ -26,7 +26,7 @@
 #if Defined Replicant ; NieR: Replicant
   #define SourceDir         "Source_Replicant"
   #define SteamAppID        "1113560"
-  #define SpecialKUninstID  "{{F11AD53F-5B59-48F6-A550-64E554497FFE}"
+  #define SpecialKUninstID  "{F11AD53F-5B59-48F6-A550-64E554497FFE}"
   #define SpecialKGameName  "NieR: Replicant"
   #define SpecialKModName   "Radical Replicant"
   #define SpecialKVersion   GetStringFileInfo(SourceDir + '\dxgi.dll', "ProductVersion")
@@ -38,7 +38,7 @@
 #elif Defined TBFix ; Tales of Berseria
   #define SourceDir         "Source_TBFix"
   #define SteamAppID        "429660"
-  #define SpecialKUninstID  "{{EBE9243D-5ADC-48F2-9716-65F75A4EE203}"
+  #define SpecialKUninstID  "{EBE9243D-5ADC-48F2-9716-65F75A4EE203}"
   #define SpecialKGameName  "Tales of Berseria"
   #define SpecialKModName   "TBFix"
   #define SpecialKVersion   GetStringFileInfo(SourceDir + '\tbfix.dll', "ProductVersion")
@@ -47,7 +47,7 @@
 #elif Defined TVFix ; Tales of Vesperia
   #define SourceDir         "Source_TVFix"
   #define SteamAppID        "738540"
-  #define SpecialKUninstID  "{{F6E4AA7A-0E71-48C1-96F4-7497FEBE2819}"
+  #define SpecialKUninstID  "{F6E4AA7A-0E71-48C1-96F4-7497FEBE2819}"
   #define SpecialKGameName  "Tales of Vesperia"
   #define SpecialKModName   "TVFix"
   #define SpecialKVersion   GetVersionNumbersString(SourceDir + '\dxgi.dll')
@@ -57,7 +57,7 @@
 #elif Defined UnX ; Final Fantasy X|X-2 HD Remaster
   #define SourceDir         "Source_UnX"
   #define SteamAppID        "359870"
-  #define SpecialKUninstID  "{{0BD6E499-367A-4B80-B38A-DE55B029599F}"
+  #define SpecialKUninstID  "{0BD6E499-367A-4B80-B38A-DE55B029599F}"
   #define SpecialKGameName  "Final Fantasy X|X-2 HD Remaster"
   #define SpecialKModName   "UnX"
   #define SpecialKVersion   GetStringFileInfo(SourceDir + '\unx.dll', "ProductVersion")
@@ -87,7 +87,7 @@
 ArchitecturesInstallIn64BitMode    = x64
 ArchitecturesAllowed               = x86 x64
 MinVersion                         = 6.3.9600
-AppId                              = {#SpecialKUninstID}
+AppId                              = {{#SpecialKUninstID}
 AppName                            = {#SpecialKName} ({#SpecialKModName}) for {#SpecialKGameName}
 AppVersion                         = {#SpecialKVersion}  
 AppVerName                         = {#SpecialKName} ({#SpecialKModName}) for {#SpecialKGameName}

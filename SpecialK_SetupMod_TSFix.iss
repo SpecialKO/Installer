@@ -17,7 +17,7 @@
 #if Defined TSFix ; Tales of Symphonia
   #define SourceDir         "Source_TSFix"
   #define SteamAppID        "372360"
-  #define SpecialKUninstID  "{{947863C3-EB5E-4496-995D-17EDABCD580D}"
+  #define SpecialKUninstID  "{947863C3-EB5E-4496-995D-17EDABCD580D}"
   #define SpecialKGameName  "Tales of Symphonia"
   #define SpecialKModName   "TSFix"
   #define SpecialKVersion   GetStringFileInfo(SourceDir + '\tsfix.dll', "ProductVersion")
@@ -54,7 +54,7 @@
 ArchitecturesInstallIn64BitMode    = x64
 ArchitecturesAllowed               = x86 x64
 MinVersion                         = 6.3.9600
-AppId                              = {#SpecialKUninstID}
+AppId                              = {{#SpecialKUninstID}
 AppName                            = {#SpecialKName} ({#SpecialKModName}) for {#SpecialKGameName}
 AppVersion                         = {#SpecialKVersion}  
 AppVerName                         = {#SpecialKName} ({#SpecialKModName}) for {#SpecialKGameName}

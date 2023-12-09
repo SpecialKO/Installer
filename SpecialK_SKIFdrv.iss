@@ -12,7 +12,6 @@
 #define AssetsDir         "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
 
 #define SourceDir         "Source_SKIFdrv"
-#define SpecialKUninstID  "{{A459BBFA-0819-49C4-8BF7-5BDF1559ED0C}"
 #define SpecialKVersion   GetStringFileInfo(SourceDir + '\SKIFdrv.exe', "ProductVersion")
 #define SpecialKHelpURL   "https://wiki.special-k.info/"
 #define SpecialKFileName  "SK_WinRing0"
@@ -29,7 +28,7 @@
 ArchitecturesInstallIn64BitMode    = x64
 ArchitecturesAllowed               = x64
 MinVersion                         = 6.3.9600
-AppId                              = {#SpecialKUninstID}
+AppId                              = {{#SKIFdrvUninstID}
 AppName                            = {#SpecialKName}
 AppVersion                         = {#SpecialKVersion}  
 AppVerName                         = {#SpecialKName}
