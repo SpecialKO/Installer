@@ -13,67 +13,67 @@
 ; Final Fantasy X|X-2 HD Remaster
 ;#define UnX
 
-#define SpecialKName      "Special K"
-#define SpecialKPublisher "The Special K Group"
-#define SpecialKURL       "https://special-k.info/"
-#define SpecialKForum     "https://discourse.differentk.fyi/"
-#define SpecialKDiscord   "https://discord.gg/specialk"
-#define SpecialKPatreon   "https://www.patreon.com/Kaldaien"
-#define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts   
-#define OutputDir         "Builds_Mods"                   ; Output folder to put compiled builds of the installer   
-#define AssetsDir         "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
+#define SpecialKName          "Special K"
+#define SpecialKPublisher     "The Special K Group"
+#define SpecialKURL           "https://special-k.info/"
+#define SpecialKForum         "https://discourse.differentk.fyi/"
+#define SpecialKDiscord       "https://discord.gg/specialk"
+#define SpecialKPatreon       "https://www.patreon.com/Kaldaien"
+#define RedistDir             "Redistributables"              ; Required dependencies and PowerShell helper scripts   
+#define OutputDir             "Builds_Mods"                   ; Output folder to put compiled builds of the installer   
+#define AssetsDir             "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
 
 #if Defined Replicant ; NieR: Replicant
-  #define SourceDir         "Source_Replicant"
-  #define SteamAppID        "1113560"
-  #define SpecialKUninstID  "{F11AD53F-5B59-48F6-A550-64E554497FFE}"
-  #define SpecialKGameName  "NieR: Replicant"
-  #define SpecialKModName   "Radical Replicant"
-  #define SpecialKVersion   GetStringFileInfo(SourceDir + '\dxgi.dll', "ProductVersion")
-  #define SpecialKHelpURL   "https://wiki.special-k.info/SpecialK/Custom/Replicant"
-  #define BackupFile        "NieR Replicant ver.1.22474487139.exe"
-  #define DownloadURL       "https://sk-data.special-k.info/misc/nier_replicant_1.0.exe"
-  #define DownloadFileName  "NieR Replicant ver.1.22474487139.exe"
+  #define SourceDir           "Source_Replicant"
+  #define SteamAppID          "1113560"
+  #define SpecialKModUninstID "{F11AD53F-5B59-48F6-A550-64E554497FFE}"
+  #define SpecialKGameName    "NieR: Replicant"
+  #define SpecialKModName     "Radical Replicant"
+  #define SpecialKVersion     GetStringFileInfo(SourceDir + '\dxgi.dll', "ProductVersion")
+  #define SpecialKHelpURL     "https://wiki.special-k.info/SpecialK/Custom/Replicant"
+  #define BackupFile          "NieR Replicant ver.1.22474487139.exe"
+  #define DownloadURL         "https://sk-data.special-k.info/misc/nier_replicant_1.0.exe"
+  #define DownloadFileName    "NieR Replicant ver.1.22474487139.exe"
 
 #elif Defined TBFix ; Tales of Berseria
-  #define SourceDir         "Source_TBFix"
-  #define SteamAppID        "429660"
-  #define SpecialKUninstID  "{EBE9243D-5ADC-48F2-9716-65F75A4EE203}"
-  #define SpecialKGameName  "Tales of Berseria"
-  #define SpecialKModName   "TBFix"
-  #define SpecialKVersion   GetStringFileInfo(SourceDir + '\tbfix.dll', "ProductVersion")
-  #define SpecialKHelpURL   "https://wiki.special-k.info/SpecialK/Custom/TBFix"
+  #define SourceDir           "Source_TBFix"
+  #define SteamAppID          "429660"
+  #define SpecialKModUninstID "{EBE9243D-5ADC-48F2-9716-65F75A4EE203}"
+  #define SpecialKGameName    "Tales of Berseria"
+  #define SpecialKModName     "TBFix"
+  #define SpecialKVersion     GetStringFileInfo(SourceDir + '\tbfix.dll', "ProductVersion")
+  #define SpecialKHelpURL     "https://wiki.special-k.info/SpecialK/Custom/TBFix"
 
 #elif Defined TVFix ; Tales of Vesperia
-  #define SourceDir         "Source_TVFix"
-  #define SteamAppID        "738540"
-  #define SpecialKUninstID  "{F6E4AA7A-0E71-48C1-96F4-7497FEBE2819}"
-  #define SpecialKGameName  "Tales of Vesperia"
-  #define SpecialKModName   "TVFix"
-  #define SpecialKVersion   GetVersionNumbersString(SourceDir + '\dxgi.dll')
-  #define SpecialKHelpURL   "https://wiki.special-k.info/SpecialK/Custom/TVFix"
-  #define BackupFile        "TOV_DE.exe"
+  #define SourceDir           "Source_TVFix"
+  #define SteamAppID          "738540"
+  #define SpecialKModUninstID "{F6E4AA7A-0E71-48C1-96F4-7497FEBE2819}"
+  #define SpecialKGameName    "Tales of Vesperia"
+  #define SpecialKModName     "TVFix"
+  #define SpecialKVersion     GetVersionNumbersString(SourceDir + '\dxgi.dll')
+  #define SpecialKHelpURL     "https://wiki.special-k.info/SpecialK/Custom/TVFix"
+  #define BackupFile          "TOV_DE.exe"
 
 #elif Defined UnX ; Final Fantasy X|X-2 HD Remaster
-  #define SourceDir         "Source_UnX"
-  #define SteamAppID        "359870"
-  #define SpecialKUninstID  "{0BD6E499-367A-4B80-B38A-DE55B029599F}"
-  #define SpecialKGameName  "Final Fantasy X|X-2 HD Remaster"
-  #define SpecialKModName   "UnX"
-  #define SpecialKVersion   GetStringFileInfo(SourceDir + '\unx.dll', "ProductVersion")
-  #define SpecialKHelpURL   "https://wiki.special-k.info/SpecialK/Custom/UnX"
+  #define SourceDir           "Source_UnX"
+  #define SteamAppID          "359870"
+  #define SpecialKModUninstID "{0BD6E499-367A-4B80-B38A-DE55B029599F}"
+  #define SpecialKGameName    "Final Fantasy X|X-2 HD Remaster"
+  #define SpecialKModName     "UnX"
+  #define SpecialKVersion     GetStringFileInfo(SourceDir + '\unx.dll', "ProductVersion")
+  #define SpecialKHelpURL     "https://wiki.special-k.info/SpecialK/Custom/UnX"
 
 #else
-  #define SourceDir         "Source"                        ; Keeps the files and folder structure of the install folder as intended post-install
-  ;#define SteamAppID        ""
-  ;#define SpecialKGameName  ""
-  ;#define SpecialKModName   ""
-  #define SpecialKVersion   GetStringFileInfo(SourceDir + '\d3d9.dll', "ProductVersion")
-  #define SpecialKHelpURL   "https://wiki.special-k.info/"
+  #define SourceDir           "Source"                        ; Keeps the files and folder structure of the install folder as intended post-install
+  ;#define SteamAppID         ""
+  ;#define SpecialKGameName   ""
+  ;#define SpecialKModName    ""
+  #define SpecialKVersion     GetStringFileInfo(SourceDir + '\d3d9.dll', "ProductVersion")
+  #define SpecialKHelpURL     "https://wiki.special-k.info/"
 #endif
 
-#define SpecialKFileName  StringChange("SpecialK " + SpecialKModName + " " + SpecialKVersion, " ", "_")
-#define MusicFileName     "techno_stargazev2.1loop.mp3"
+#define SpecialKFileName      StringChange("SpecialK " + SpecialKModName + " " + SpecialKVersion, " ", "_")
+#define MusicFileName         "techno_stargazev2.1loop.mp3"
 
 #include "SpecialK_Shared.iss"
 
@@ -87,7 +87,7 @@
 ArchitecturesInstallIn64BitMode    = x64
 ArchitecturesAllowed               = x86 x64
 MinVersion                         = 6.3.9600
-AppId                              = {{#SpecialKUninstID}
+AppId                              = {{#SpecialKModUninstID}
 AppName                            = {#SpecialKName} ({#SpecialKModName}) for {#SpecialKGameName}
 AppVersion                         = {#SpecialKVersion}  
 AppVerName                         = {#SpecialKName} ({#SpecialKModName}) for {#SpecialKGameName}

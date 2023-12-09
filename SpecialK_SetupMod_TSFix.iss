@@ -4,25 +4,25 @@
 
 #define TSFix
 
-#define SpecialKName      "Special K"
-#define SpecialKPublisher "The Special K Group"
-#define SpecialKURL       "https://special-k.info/"
-#define SpecialKForum     "https://discourse.differentk.fyi/"
-#define SpecialKDiscord   "https://discord.gg/specialk"
-#define SpecialKPatreon   "https://www.patreon.com/Kaldaien"
-#define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts   
-#define OutputDir         "Builds_Mods"                   ; Output folder to put compiled builds of the installer   
-#define AssetsDir         "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
+#define SpecialKName          "Special K"
+#define SpecialKPublisher     "The Special K Group"
+#define SpecialKURL           "https://special-k.info/"
+#define SpecialKForum         "https://discourse.differentk.fyi/"
+#define SpecialKDiscord       "https://discord.gg/specialk"
+#define SpecialKPatreon       "https://www.patreon.com/Kaldaien"
+#define RedistDir             "Redistributables"              ; Required dependencies and PowerShell helper scripts   
+#define OutputDir             "Builds_Mods"                   ; Output folder to put compiled builds of the installer   
+#define AssetsDir             "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
 
 #if Defined TSFix ; Tales of Symphonia
-  #define SourceDir         "Source_TSFix"
-  #define SteamAppID        "372360"
-  #define SpecialKUninstID  "{947863C3-EB5E-4496-995D-17EDABCD580D}"
-  #define SpecialKGameName  "Tales of Symphonia"
-  #define SpecialKModName   "TSFix"
-  #define SpecialKVersion   GetStringFileInfo(SourceDir + '\tsfix.dll', "ProductVersion")
-  #define SpecialKHelpURL   "https://wiki.special-k.info/en/SpecialK/Custom/TSFix"
-  #define BackupFile        "TOS.exe"
+  #define SourceDir           "Source_TSFix"
+  #define SteamAppID          "372360"
+  #define SpecialKModUninstID "{947863C3-EB5E-4496-995D-17EDABCD580D}"
+  #define SpecialKGameName    "Tales of Symphonia"
+  #define SpecialKModName     "TSFix"
+  #define SpecialKVersion     GetStringFileInfo(SourceDir + '\tsfix.dll', "ProductVersion")
+  #define SpecialKHelpURL     "https://wiki.special-k.info/en/SpecialK/Custom/TSFix"
+  #define BackupFile          "TOS.exe"
 
   // Texture packs
   #define File_dlc_cleanup_ui          "97_UICleanup.7z"
@@ -54,7 +54,7 @@
 ArchitecturesInstallIn64BitMode    = x64
 ArchitecturesAllowed               = x86 x64
 MinVersion                         = 6.3.9600
-AppId                              = {{#SpecialKUninstID}
+AppId                              = {{#SpecialKModUninstID}
 AppName                            = {#SpecialKName} ({#SpecialKModName}) for {#SpecialKGameName}
 AppVersion                         = {#SpecialKVersion}  
 AppVerName                         = {#SpecialKName} ({#SpecialKModName}) for {#SpecialKGameName}
