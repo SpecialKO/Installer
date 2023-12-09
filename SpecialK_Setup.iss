@@ -9,6 +9,7 @@
 #define SpecialKForum     "https://discourse.differentk.fyi/"
 #define SpecialKDiscord   "https://discord.gg/specialk"
 #define SpecialKPatreon   "https://www.patreon.com/Kaldaien"
+#define SpecialKUninstID  "{F4A43527-9457-424A-90A6-17CF02ACF677}"
 #define SpecialKExeName   "SKIF.exe"                                                                                 
 #define SourceDir         "Source"                        ; Keeps the files and folder structure of the install folder as intended post-install
 #define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts   
@@ -33,7 +34,7 @@ ArchitecturesAllowed               = x86 x64
 ; MinVersion                         = 6.3.9600
 ; Windows 7 SP1
 MinVersion                        = 6.1sp1
-AppId                              = {{F4A43527-9457-424A-90A6-17CF02ACF677}
+AppId                              = {{#SpecialKUninstID}
 AppName                            = {#SpecialKName}
 AppVersion                         = {#SpecialKVersion}  
 AppVerName                         = {#SpecialKName}
@@ -389,6 +390,7 @@ var
     IsKernelDriver   : Boolean;
     IsSKIFAutoStart  : Boolean;
     PowerShellArgs   : String;
+    DriverUninstStr  : String;
 begin
   if CurUninstallStep = usUninstall then
   begin 
@@ -434,10 +436,11 @@ begin
 
     UninstallProgressForm.StatusLabel.Caption := 'Determining if any Special K components requires elevation to remove...';
 
-    IsKernelDriver := IsKernelDriverInstalled();
+    IsKernelDriver := RegQueryStringValue(HKLM64, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#SKIFdrvUninstID}_is1', 'UninstallString', DriverUninstStr) or IsKernelDriverInstalled();
     if IsKernelDriver then
     begin
       Log('Kernel driver check : installed');
+      Log('Uninstall string : ' + DriverUninstStr);
     end;
 
     IsSKIFAutoStart := IsSKIFAutoStartEnabled();
@@ -456,10 +459,27 @@ begin
 
     if IsKernelDriver then
     begin
-      PowerShellArgs := PowerShellArgs + 'sc.exe stop ''SK_WinRing0''; sc.exe delete ''SK_WinRing0''; ';
+      if FileExists(RemoveQuotes(DriverUninstStr)) then
+      begin
+        UninstallProgressForm.StatusLabel.Caption := 'Uninstalling Special K Extended Hardware Monitoring Driver...';
+        Log('Uninstalling the Special K Extended Hardware Monitoring Driver package.');
+
+        ShellExec('RunAs', DriverUninstStr, '/VERYSILENT /SUPPRESSMSGBOXES', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
+        
+        Sleep(500);
+
+        if ResultCode <> 0 then
+        begin
+          Log('Failed to uninstall the Special K Extended Hardware Monitoring Driver package : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
+        end;
+      end
+      else
+      begin
+        PowerShellArgs := PowerShellArgs + 'sc.exe stop ''SK_WinRing0''; sc.exe delete ''SK_WinRing0''; ';
+      end;
     end;
 
-    if (IsSKIFAutoStart) or (IsKernelDriver) then
+    if Length(PowerShellArgs) > 0 then
     begin
       UninstallProgressForm.StatusLabel.Caption := 'Running cleanup commands in an elevated process...';
       Log('Calling an elevated Powershell session with the following commands : ' + PowerShellArgs );
