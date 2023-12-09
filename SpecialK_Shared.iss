@@ -9,8 +9,9 @@
 ; -----------
 ; SHARED DEFINITIONS
 ; -----------
+#define SpecialKUninstID "{F4A43527-9457-424A-90A6-17CF02ACF677}"
 #define SKIFdrvUninstID  "{A459BBFA-0819-49C4-8BF7-5BDF1559ED0C}"
-
+//#define SpecialKModUninstID "" // Holds AppID for game-specific mods; defined in the separate mod install scripts
 
 ; -----------
 ; SHARED CODE
@@ -360,16 +361,22 @@ end;
 // Detects and returns the install folder of Special K
 // This is called from [Setup] to dynamically set the install folder
 function GetSpecialKInstallFolder(SKInstallPath: String): String;
-//var
-//  SKInstallPath:    String;
 begin
-  SKInstallPath := ExpandConstant('{reg:HKCU\SOFTWARE\Kaldaien\Special K,Path|{commonpf64}\Special K}');
+  if not RegQueryStringValue(HKLM64, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#SpecialKUninstID}_is1', 'InstallLocation', SKInstallPath) then
+  begin
+    SKInstallPath := ExpandConstant('{reg:HKCU\SOFTWARE\Kaldaien\Special K,Path|{autopf64}\Special K}');
+  end;
 
   if DirExists(SKInstallPath) then
   begin
     Log(Format('Found Special K folder: %s', [SKInstallPath]));
-    Result := SKInstallPath;
-  end; 
+  end
+  else
+  begin
+    Log(Format('Failed to locate Special K folder, using fallback: %s', [SKInstallPath]));
+  end;
+
+  Result := SKInstallPath; 
 end;
 
 
