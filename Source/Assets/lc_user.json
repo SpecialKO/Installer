@@ -1,0 +1,33 @@
+{
+  "README": "This is where any custom entries are added, as this file will never be overwritten.",
+  "Steam": {
+    "1157970": [
+      {
+        "Desc": "Run launcher",
+        "Exe": "Launcher.exe",
+        "Args": "-sv_cheats 1",
+        "Dir": ""
+      },
+      {
+        "Desc": "Skip intro videos",
+        "Exe": "Binaries/MirrorsEdge.exe",
+        "Args": "-nostartupmovies",
+        "Dir": "Binaries"
+      }
+    ],
+    "1289310": [
+      {
+        "Desc": "Helltaker vs. the World (Special K dummy entry)",
+        "Exe": "Helltaker.exe",
+        "Args": "-TheWorld",
+        "Dir": ""
+      },
+      {
+        "Desc": "Helltaker Takes Off (Special K dummy entry)",
+        "Exe": "Helltaker.exe",
+        "Args": "-TakesOff",
+        "Dir": ""
+      }
+    ]
+  }
+}
