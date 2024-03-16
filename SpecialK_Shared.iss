@@ -1,6 +1,9 @@
 ; -- SpecialK_Shared.iss --
 ;
-; This script holds code shared between Special K scripts.
+; This script holds shared helper code, procedures, functions, and logic
+;   used by the other Special K build scripts.
+;
+;
 ;
 ; licensed under MIT
 ; https://github.com/SpecialKO/Installer/blob/main/LICENSE
