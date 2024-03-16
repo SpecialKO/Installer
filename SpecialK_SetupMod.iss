@@ -122,6 +122,7 @@ UninstallDisplayIcon               = {app}\Version\unins000.exe
 CloseApplications                  = yes
 DisableWelcomePage                 = no
 SetupLogging                       = yes
+SetupMutex                         = SKSetupMutex{#SetupSetting("AppId")}
 
 
 [Languages]
