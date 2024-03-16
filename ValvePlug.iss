@@ -9,7 +9,6 @@
 #define SpecialKForum     "https://discourse.differentk.fyi/"
 #define SpecialKDiscord   "https://discord.gg/specialk"
 #define SpecialKPatreon   "https://www.patreon.com/Kaldaien"
-#define SpecialKUninstID  "{E100754B-5610-4DA5-A572-B37BE59B0562}"
 #define SpecialKExeName   "SKIF.exe"                                                                                 
 #define SourceDir         "Source_ValvePlug"              ; Keeps the files and folder structure of the install folder as intended post-install
 #define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts   
@@ -34,7 +33,7 @@ ArchitecturesAllowed               = x86 x64
 ; MinVersion                         = 6.3.9600
 ; Windows 7 SP1
 MinVersion                        = 6.1sp1
-AppId                              = {{#SpecialKUninstID}
+AppId                              = {{#ValvePlugUninstID}
 AppName                            = {#SpecialKName}
 AppVersion                         = {#SpecialKVersion}  
 AppVerName                         = {#SpecialKName}

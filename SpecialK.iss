@@ -9,7 +9,6 @@
 #define SpecialKForum     "https://discourse.differentk.fyi/"
 #define SpecialKDiscord   "https://discord.gg/specialk"
 #define SpecialKPatreon   "https://www.patreon.com/Kaldaien"
-#define SpecialKUninstID  "{F4A43527-9457-424A-90A6-17CF02ACF677}"
 #define SpecialKExeName   "SKIF.exe"                                                                                 
 #define SourceDir         "Source"                        ; Keeps the files and folder structure of the install folder as intended post-install
 #define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts   
