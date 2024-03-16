@@ -1,9 +1,24 @@
 # Installer
-![Screenshot of the installer](https://sk-data.special-k.info/artwork/screens/installer_75percent.png)
+![Screenshot of the main Special K installer](https://sk-data.special-k.info/artwork/screens/installer_75percent.png)
 
-This is the Inno Setup Script (.iss) and assets used to compile the Special K installer.
+These are the Inno Setup scripts (.iss) and assets used to compile the various types of installers that the Special K team provides.
 
-The packaged Special K installer can be downloaded from https://special-k.info/
+* The main packaged Special K installer can be downloaded from https://special-k.info/.
+* The other packaged installers from their respective location.
+
+## About the repository
+
+Note that this repository includes the core framework required by the installers &mdash; it does not include *all* required game/mod/software files, folders, and dependencies to build a specific installer as such files are outside the scope of this repository. Inno Setup users should therefor not expect to be able to build a specific installer using solely the files in this repository. The scripts are provided primarily for historical as well as educational purposes.
+
+| Inno Setup Script       | What it does  |
+| ----------------------: | ------------- |
+| `SpecialK.iss`          | Builds a combined installer of [Special K](https://github.com/SpecialKO/SpecialK), [SKIF](https://github.com/SpecialKO/SKIF), and [SKIFsvc](https://github.com/SpecialKO/SKIFsvc). |
+| `SKIFdrv.iss`           | Builds an installer for [SKIFdrv](https://github.com/SpecialKO/SKIFdrv). |
+| `Mod.iss`               | Builds installers for the game mods: <br>- **TBFix** for *Tales of Berseria* <br>- **TVFix** for *Tales of Vesperia* <br>- **UnX** for *Final Fantasy X\|X-2 HD Remaster* |
+| `Mod_TSFix.iss`         | Builds installers for the game mods: <br>- **TSFix** for *Tales of Symphonia* |
+| `ValvePlug.iss`         | Builds an installer for [Valve Plug](https://github.com/SpecialKO/ValvePlug). |
+| `SpecialK_Shared.iss`   | Shared helper scripts, procedures, functions, and logic used by the build scripts. |
+| `CodeDependencies.iss`  | Shared dependency handler: [Inno Setup Dependency Installer](https://github.com/DomGries/InnoDependencyInstaller) |
 
 ## Third-party code
 
