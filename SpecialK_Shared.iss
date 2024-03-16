@@ -43,6 +43,7 @@ var
   CreditMusicButton : TNewButton;
   OneDriveStopped   : Boolean;
   OneDrivePath      : String;
+  SteamStopped      : Boolean;
 
 
 // -----------
@@ -86,6 +87,43 @@ end;
 function IsWindows8OrLater: Boolean;
 begin
   Result := (GetWindowsVersion >= $06020000);
+end;
+
+
+// -----------
+// WMI
+// -----------
+
+function InitializeWMI(): Boolean;
+begin
+  if VarIsEmpty(WbemLocator) or VarIsEmpty(WbemServices) then
+  begin
+    try
+      if VarIsEmpty(WbemLocator) then
+      begin
+        Log('Creating an IDispatch based COM Automation object...');
+        WbemLocator   := CreateOleObject('WbemScripting.SWbemLocator');
+      end;
+
+      if not VarIsEmpty(WbemLocator) and VarIsEmpty(WbemServices) then
+      begin
+        Log('Connecting to the local root\CIMV2 WMI namespace...');
+        WbemServices  := WbemLocator.ConnectServer('', 'root\CIMV2'); // Let's not include 'localhost'
+      end;
+
+      if not VarIsEmpty(WbemLocator) and not VarIsEmpty(WbemServices) then
+      begin       
+        Result := true;
+      end;
+    except 
+      Log('Catastrophic error in InitializeWMI() !');
+      // Surpresses exception when an issue prevents proper lookup
+    end;
+  end
+  else
+  begin
+    Result := true;
+  end;
 end;
 
 
@@ -205,7 +243,7 @@ end;
 
 
 // -----------
-// Valve Data Format (.VDF and .ACF) handlers
+// Steam / Valve
 // -----------
 
 // Parses Valve Data Format (.VDF and .ACF) files
@@ -315,6 +353,7 @@ end;
 
 // Detects and returns the install folder of a Steam game given its AppID
 // This is called from [Setup] to dynamically set the install folder
+//    0 = Get the root Steam install folder
 function GetSteamInstallFolder(AppID: String): String;
 var
   I:                Integer;
@@ -331,53 +370,86 @@ begin
   begin
     Log(Format('Found Steam folder: %s', [SteamInstallPath]));
 
-    if FileExists(SteamInstallPath + '\config\libraryfolders.vdf') then
-      SteamLibVDFPath := SteamInstallPath + '\config\libraryfolders.vdf'     // Modern location
-    else
-      SteamLibVDFPath := SteamInstallPath + '\steamapps\libraryfolders.vdf'; // Legacy location
-
-    if GetVDFKeyValues(SteamLibVDFPath, 'path', Libraries) then
+    if SameText (AppId, '0') then
     begin
-      for I := 0 to GetArrayLength(Libraries) - 1 do
-      begin
-        Library := Libraries[I];
-        GameInstallPath := Library + '\steamapps\common\';
+      Log('AppID 0 was given, returning base Steam folder.');
+      Result := SteamInstallPath;
+    end
+    else
+    begin
+      if FileExists(SteamInstallPath + '\config\libraryfolders.vdf') then
+        SteamLibVDFPath := SteamInstallPath + '\config\libraryfolders.vdf'     // Modern location
+      else
+        SteamLibVDFPath := SteamInstallPath + '\steamapps\libraryfolders.vdf'; // Legacy location
 
-        if FileExists(Library + '\steamapps\appmanifest_' + AppID + '.acf') and
-           GetVDFKeyValue(Library + '\steamapps\appmanifest_' + AppID + '.acf', 'installdir', GameInstallDir) then
+      if GetVDFKeyValues(SteamLibVDFPath, 'path', Libraries) then
+      begin
+        for I := 0 to GetArrayLength(Libraries) - 1 do
         begin
-          if DirExists(GameInstallPath + GameInstallDir) then
+          Library := Libraries[I];
+          GameInstallPath := Library + '\steamapps\common\';
+
+          if FileExists(Library + '\steamapps\appmanifest_' + AppID + '.acf') and
+             GetVDFKeyValue(Library + '\steamapps\appmanifest_' + AppID + '.acf', 'installdir', GameInstallDir) then
           begin
-            Log(Format('Found game folder: %s', [GameInstallPath + GameInstallDir]));
-            Result := GameInstallPath + GameInstallDir;
-            break;
+            if DirExists(GameInstallPath + GameInstallDir) then
+            begin
+              Log(Format('Found game folder: %s', [GameInstallPath + GameInstallDir]));
+              Result := GameInstallPath + GameInstallDir;
+              break;
+            end;
           end;
         end;
       end;
-    end;
+    end
   end; 
 end;
 
-// Detects and returns the install folder of Special K
-// This is called from [Setup] to dynamically set the install folder
-function GetSpecialKInstallFolder(SKInstallPath: String): String;
+// Checks if Steam is currently running
+function IsSteamRunning(): Boolean;
+var
+  WbemObjectSet : Variant;
+    
 begin
-  if not RegQueryStringValue(HKLM64, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#SpecialKUninstID}_is1', 'InstallLocation', SKInstallPath) then
-  begin
-    SKInstallPath := ExpandConstant('{reg:HKCU\SOFTWARE\Kaldaien\Special K,Path|{autopf64}\Special K}');
-  end;
+  try
+    if InitializeWMI() then
+    begin
+      WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "Steam.exe")');
 
-  if DirExists(SKInstallPath) then
-  begin
-    Log(Format('Found Special K folder: %s', [SKInstallPath]));
-  end
-  else
-  begin
-    Log(Format('Failed to locate Special K folder, using fallback: %s', [SKInstallPath]));
-  end;
+      if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
+      begin      
+        Result := true;
+      end;
+    end;
 
-  Result := SKInstallPath; 
+  except 
+    Log('Catastrophic error in IsSteamRunning()!');
+    // Surpresses exception when an issue prevents proper lookup
+  end;
 end;
+
+// Stops the Steam client
+function StopSteam: Boolean;
+var
+  ResultCode : Integer;
+begin
+  Log('Shutting down Steam...');
+  SteamStopped := ShellExec('', 'steam://exit', '', '', SW_HIDE, ewNoWait, ResultCode);
+  Result := SteamStopped;
+end;
+
+// Restarts the Steam client if it was stopped by us
+function RestartSteam: Boolean;
+var
+  ResultCode : Integer;
+begin
+  if SteamStopped then
+  begin
+    Log('Restarting Steam...');
+    Result := ShellExec('', 'steam://', '', '', SW_HIDE, ewNoWait, ResultCode);
+  end;
+end;
+
 
 
 // -----------
@@ -515,43 +587,6 @@ end;
 
 
 // -----------
-// WMI
-// -----------
-
-function InitializeWMI(): Boolean;
-begin
-  if VarIsEmpty(WbemLocator) or VarIsEmpty(WbemServices) then
-  begin
-    try
-      if VarIsEmpty(WbemLocator) then
-      begin
-        Log('Creating an IDispatch based COM Automation object...');
-        WbemLocator   := CreateOleObject('WbemScripting.SWbemLocator');
-      end;
-
-      if not VarIsEmpty(WbemLocator) and VarIsEmpty(WbemServices) then
-      begin
-        Log('Connecting to the local root\CIMV2 WMI namespace...');
-        WbemServices  := WbemLocator.ConnectServer('', 'root\CIMV2'); // Let's not include 'localhost'
-      end;
-
-      if not VarIsEmpty(WbemLocator) and not VarIsEmpty(WbemServices) then
-      begin       
-        Result := true;
-      end;
-    except 
-      Log('Catastrophic error in InitializeWMI() !');
-      // Surpresses exception when an issue prevents proper lookup
-    end;
-  end
-  else
-  begin
-    Result := true;
-  end;
-end;
-
-
-// -----------
 // PresentMon
 // -----------
 
@@ -640,8 +675,29 @@ end;
 
 
 // -----------
-// SKIF and Injection Service
+// Special K / SKIF / Injection Service
 // -----------
+
+// Detects and returns the install folder of Special K
+// This is called from [Setup] to dynamically set the install folder
+function GetSpecialKInstallFolder(SKInstallPath: String): String;
+begin
+  if not RegQueryStringValue(HKLM64, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#SpecialKUninstID}_is1', 'InstallLocation', SKInstallPath) then
+  begin
+    SKInstallPath := ExpandConstant('{reg:HKCU\SOFTWARE\Kaldaien\Special K,Path|{autopf64}\Special K}');
+  end;
+
+  if DirExists(SKInstallPath) then
+  begin
+    Log(Format('Found Special K folder: %s', [SKInstallPath]));
+  end
+  else
+  begin
+    Log(Format('Failed to locate Special K folder, using fallback: %s', [SKInstallPath]));
+  end;
+
+  Result := SKInstallPath; 
+end;
 
 // Checks if the injector service of Special K or SKIF is running
 function IsSKIForSvcRunning(): Boolean;
@@ -674,7 +730,6 @@ begin
     // Surpresses exception when an issue prevents proper lookup
   end;
 end;
-
 
 // Checks if SKIF is currently running
 function IsSKIFRunning(): Boolean;
