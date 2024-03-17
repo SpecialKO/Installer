@@ -54,18 +54,47 @@ var
 // Imported Win32 functions
 // -----------
 
-// If Inno Setup ever becomes native 64-bit, the below rows needs to be changed to SetWindowLongPtrW/GetWindowLongPtrW
-function SetWindowLong ( Wnd: HWND;  nIndex: Integer;  dwNewLong: Longint): Longint;  external 'SetWindowLongW@user32.dll stdcall';
-function GetWindowLong ( Wnd: HWND;  nIndex: Integer)                     : Longint;  external 'GetWindowLongW@user32.dll stdcall';
-//function SetWindowLongPtr (Wnd : HWND;  nIndex: Integer;  dwNewLong: Longint): Longint;  external 'SetWindowLongPtrW@user32.dll stdcall';
-//function GetWindowLongPtr (Wnd : HWND;  nIndex: Integer)                     : Longint;  external 'GetWindowLongPtrW@user32.dll stdcall';
-function GetWindow     (hWnd: HWND;    uCmd: Cardinal)                    : HWND;     external 'GetWindow@user32.dll stdcall'; 
-
-// Retrieves the calling thread's last-error code value.
-function GetLastError                                                     : Cardinal; external 'GetLastError@kernel32.dll stdcall';
+// These are all required to fix Inno Setup missing a taskbar preview
+// - Not critical, so use delayload
+// - If Inno Setup ever becomes native 64-bit, the below rows needs to be changed to SetWindowLongPtrW/GetWindowLongPtrW
+  function GetWindow        (hWnd: HWND;    uCmd: Cardinal)                    : HWND;     external 'GetWindow@user32.dll stdcall delayload';
+  function SetWindowLong    (hWnd: HWND;  nIndex: Integer;  dwNewLong: Longint): Longint;  external 'SetWindowLongW@user32.dll stdcall delayload';
+  function GetWindowLong    (hWnd: HWND;  nIndex: Integer)                     : Longint;  external 'GetWindowLongW@user32.dll stdcall delayload';
+//function SetWindowLongPtr (hWnd: HWND;  nIndex: Integer;  dwNewLong: Longint): Longint;  external 'SetWindowLongPtrW@user32.dll stdcall delayload';
+//function GetWindowLongPtr (hWnd: HWND;  nIndex: Integer)                     : Longint;  external 'GetWindowLongPtrW@user32.dll stdcall delayload';
+ 
 
 // Used to play background music during installation
-function mciSendString (lpstrCommand: String; lpstrReturnString: Integer; uReturnLength: Cardinal; hWndCallback: HWND): Cardinal; external 'mciSendStringW@winmm.dll stdcall';
+// - Not critical, so use delayload
+function mciSendString (lpstrCommand: String; lpstrReturnString: Integer; uReturnLength: Cardinal; hWndCallback: HWND): Cardinal; external 'mciSendStringW@winmm.dll stdcall delayload';
+
+
+// -----------
+// Fixes Inno Setup no taskbar preview
+// -----------
+// From StackOverflow: https://stackoverflow.com/a/64162597/15133327
+// Created by: https://stackoverflow.com/users/709507/inside-man
+// Licensed under CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/
+//
+// Technically wrong: "You must not call SetWindowLong with the GWL_HWNDPARENT index to change the parent of a child window.
+//                     Instead, use the SetParent function."
+function FixInnoSetupTaskbarPreview: Boolean;
+begin
+  if not WizardSilent() then
+  begin  
+
+    // We are delay loading all of these required DLL functions, so need additional exception handling
+    try
+      Log('Fixing the no taskbar preview bug of Inno Setup.');
+      SetWindowLong(WizardForm.Handle, -8, GetWindowLong(GetWindow(WizardForm.Handle, 4), -8));      
+      Result := True;
+    except 
+      Log('Catastrophic error in FixInnoSetupTaskbarPreview() !');
+      // Surpresses exception when an issue prevents proper lookup
+    end;
+
+  end;
+end;
 
 
 // -----------
@@ -117,7 +146,7 @@ begin
 
       if not VarIsEmpty(WbemLocator) and not VarIsEmpty(WbemServices) then
       begin       
-        Result := true;
+        Result := True;
       end;
     except 
       Log('Catastrophic error in InitializeWMI() !');
@@ -126,7 +155,7 @@ begin
   end
   else
   begin
-    Result := true;
+    Result := True;
   end;
 end;
 
@@ -143,13 +172,13 @@ begin
     if MusicPlayback then
     begin
       mciSendString('stop soundbg', 0, 0, 0);
-      MusicPlayback := false;
+      MusicPlayback := False;
       ToggleMusicButton.Caption := 'Play Music';
     end
     else
     begin
       mciSendString('play soundbg repeat', 0, 0, 0);
-      MusicPlayback := true;
+      MusicPlayback := True;
       ToggleMusicButton.Caption := 'Stop Music';
     end;
   end;
@@ -165,15 +194,13 @@ end;
 
 function InitializeMusicPlayback(FileName: String): Boolean;
 begin
-  Result := false;
-
   if not WizardSilent() then
   begin 
     // Some nice background tunes
     Log('Preparing music components.');
     try
-      MusicPlayback  := false;
-      MusicAvailable := false;
+      MusicPlayback  := False;
+      MusicAvailable := False;
       ExtractTemporaryFile(FileName);
 
       // Open the track
@@ -212,8 +239,8 @@ begin
           CreditMusicButton.Anchors := [akLeft, akBottom];
 
           // If everything worked so far
-          MusicAvailable := true;
-          Result := true;
+          MusicAvailable := True;
+          Result := True;
         end;
       end;
     except
@@ -224,8 +251,6 @@ end;
 
 function DeinitializeMusicPlayback: Boolean;
 begin
-  Result := false;
-
   if not WizardSilent() and MusicAvailable then
   begin 
     Log('Cleaning up music components.');
@@ -234,11 +259,11 @@ begin
       begin
         // Stop music playback if it's currently playing
         mciSendString('stop soundbg', 0, 0, 0);
-        MusicPlayback := false;
+        MusicPlayback := False;
       end;
       // Close the MCI device
       mciSendString('close all', 0, 0, 0);
-      Result := true;
+      Result := True;
     except
       Log('Failed deinitializing music components: ' + AddPeriod(GetExceptionMessage));
     end;
@@ -413,7 +438,7 @@ end;
 function IsSteamRunning(): Boolean;
 var
   WbemObjectSet : Variant;
-    
+  
 begin
   try
     if InitializeWMI() then
@@ -422,7 +447,7 @@ begin
 
       if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
       begin      
-        Result := true;
+        Result := True;
       end;
     end;
 
@@ -490,7 +515,7 @@ var
   BufferH:   String;
   AnsiStr:   AnsiString;
   HeaderPos: Longint;
-  Error:     Cardinal;
+  Error:     Longint;
   Flag:      Integer;
 begin
   Log(Format('Checking LAA on %s', [FileName]));
@@ -566,7 +591,7 @@ begin
                 end
                 else
                 begin
-                  Error := GetLastError;
+                  Error := DLLGetLastError;
                   Log(Format('Copying "%s" to "%s" failed with code %d (0x%x) - %s', [
                       FileName, FileName + '_LAUnaware.bak', Error, Error, SysErrorMessage(Error)]));
                 end;
@@ -576,7 +601,7 @@ begin
         end;
       end;
     except
-      Error := GetLastError;
+      Error := DLLGetLastError;
       Log(Format('Operating on "%s" failed with code %d (0x%x) - %s', [
           FileName, Error, Error, SysErrorMessage(Error)]));
     finally
@@ -725,7 +750,7 @@ begin
 
       if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
       begin      
-        Result := true;
+        Result := True;
       end;
     end;
 
@@ -748,7 +773,7 @@ begin
 
       if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
       begin      
-        Result := true;
+        Result := True;
       end;
     end;
 
@@ -795,7 +820,7 @@ begin
         begin
           if not VarIsNull(TaskCollection.Item(I)) and (TaskCollection.Item(I).Name = 'SK_InjectLogon') then
           begin
-            Result := true;
+            Result := True;
           end; 
         end;
       end;
@@ -829,7 +854,7 @@ begin
         if Length(Path) > 0 then
         begin
           OneDrivePath := Path;
-          Result := true;
+          Result := True;
         end;
       end;
     end;
@@ -889,7 +914,7 @@ begin
 
       if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
       begin       
-        Result := true;
+        Result := True;
       end;
     end;
 
@@ -908,14 +933,12 @@ var
   Folder: String;
 
 begin
-  Result := false;
-
   try
     // Test if we can expand the userdocs constant and if it exists
     Folder := ExpandConstant('{' + ConstantFolder + '}');
     if DirExists(Folder) then
     begin
-      Result := true;
+      Result := True;
     end;
   except
     Log('Failed to expand constant: ' + AddPeriod(GetExceptionMessage));

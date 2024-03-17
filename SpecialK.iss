@@ -137,22 +137,13 @@ begin
 
   if not WizardSilent() then
   begin 
-
-    // Fixes Inno Setup no taskbar preview
-    // From StackOverflow: https://stackoverflow.com/a/64162597/15133327
-    // Created by: https://stackoverflow.com/users/709507/inside-man
-    // Licensed under CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/
-    //
-    // Technically wrong: "You must not call SetWindowLong with the GWL_HWNDPARENT index to change the parent of a child window.
-    //                     Instead, use the SetParent function." 
-    Log('Fixing the no taskbar preview bug of Inno Setup.');
-    SetWindowLong(WizardForm.Handle, -8, GetWindowLong(GetWindow(WizardForm.Handle, 4), -8));
+    FixInnoSetupTaskbarPreview();
 
     // Have the disk spacel label appear here instead of later
     WizardForm.DiskSpaceLabel.Parent := PageFromID(wpWelcome).Surface;
-  end;
      
-  InitializeMusicPlayback('{#MusicFileName}');
+    InitializeMusicPlayback('{#MusicFileName}');
+  end;
 end;
 
 

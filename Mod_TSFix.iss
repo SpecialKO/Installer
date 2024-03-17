@@ -185,33 +185,23 @@ procedure InitializeWizard();
 begin 
   Log('Initializing Wizard.');
 
-  // Fixes Inno Setup no taskbar preview
-  // From StackOverflow: https://stackoverflow.com/a/64162597/15133327
-  // Created by: https://stackoverflow.com/users/709507/inside-man
-  // Licensed under CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/
-  //
-  // Technically wrong: "You must not call SetWindowLong with the GWL_HWNDPARENT index to change the parent of a child window.
-  //                     Instead, use the SetParent function." 
-  Log('Fixing the no taskbar preview bug of Inno Setup.');
-  SetWindowLong(WizardForm.Handle, -8, GetWindowLong(GetWindow(WizardForm.Handle, 4), -8));
+  if not WizardSilent() then
+  begin 
+    FixInnoSetupTaskbarPreview();
 
-  // Have the disk spacel label appear here instead of later
-  WizardForm.DiskSpaceLabel.Parent := PageFromID(wpWelcome).Surface;
+    // Have the disk spacel label appear here instead of later
+    WizardForm.DiskSpaceLabel.Parent := PageFromID(wpWelcome).Surface;
 
-  // Sets up the download page
-  DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), SetupMessage(msgPreparingDesc), @OnDownloadProgress);
+    // Sets up the download page
+    DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), SetupMessage(msgPreparingDesc), @OnDownloadProgress);
+
+    InitializeMusicPlayback('{#MusicFileName}');
+  end;
  
   DisplayWidth  := GetSystemMetrics(SM_CXSCREEN);
   DisplayHeight := GetSystemMetrics(SM_CYSCREEN);
 
   Log(Format('Primary display resolution: %dx%d', [DisplayWidth, DisplayHeight]));
-
-  if not WizardSilent() then
-  begin
-    // Do things when not silent
-  end;
-   
-  InitializeMusicPlayback('{#MusicFileName}');
 end;
 
 
