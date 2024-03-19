@@ -13,13 +13,13 @@
 ;#define Replicant
 
 ; Tales of Berseria
-;#define TBFix
+#define TBFix
 
 ; Tales of Vesperia
 ;#define TVFix
 
 ; Final Fantasy X|X-2 HD Remaster
-#define UnX
+;#define UnX
 
 #define SpecialKName          "Special K"
 #define SpecialKPublisher     "The Special K Group"
@@ -58,7 +58,7 @@
   #define SpecialKModUninstID "{F6E4AA7A-0E71-48C1-96F4-7497FEBE2819}"
   #define SpecialKGameName    "Tales of Vesperia"
   #define SpecialKModName     "TVFix"
-  #define SpecialKVersion     GetVersionNumbersString(SourceDir + '\dxgi.dll')
+  #define SpecialKVersion     GetVersionNumbersString(SourceDir + '\dxgi.dll') ; "0.5.2.5"
   #define SpecialKHelpURL     "https://wiki.special-k.info/SpecialK/Custom/TVFix"
   #define BackupFile          "TOV_DE.exe"
 
