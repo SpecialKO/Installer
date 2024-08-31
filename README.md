@@ -35,7 +35,8 @@ Note that this repository includes the core framework required by the installers
 5. Right click the relevant Inno Setup Install Script (.iss) file, and click **Compile**.
    * See the section above on which file corresponds to which installer.
    * `Mod.iss` is shared between multiple installers -- edit the file and (un)comment the appropriate `#define <ModName>` at the top of the file to select which installer to build.
-6. Once the installer has been built, perform an installation for testing purposes to verify that everything works as intended.
+6. Once the installer has been built, perform an install and uninstall for testing purposes to verify that everything works as intended.
+   * Uninstalls of game-specific mods are intended to restore the original untouched game state as much as possible (e.g. restoring original LAA-unaware executables).
 
 ## Third-party code
 
