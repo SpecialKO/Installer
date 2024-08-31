@@ -20,6 +20,23 @@ Note that this repository includes the core framework required by the installers
 | `SpecialK_Shared.iss`   | Shared helper code, procedures, functions, and logic used by the build scripts. |
 | `CodeDependencies.iss`  | Shared dependency handler: [Inno Setup Dependency Installer](https://github.com/DomGries/InnoDependencyInstaller) |
 
+## Building the installers
+
+1. Download Inno Setup from https://jrsoftware.org/isinfo.php
+2. Clone the whole repository.
+3. Create the necessary input and output subfolders based on which installer is being build:
+   * Main Special K installer uses `Source` as the input folder and `Builds` as the output folder.
+   * Game-specific installers uses `Source_<ModName>` (e.g. `Source_UnX`) as the input folder and `Builds_Mods` as the output folder.
+   * SKIFdrv (the kernel driver installer) uses `Source_SKIFdrv` as input and `Builds_SKIFdrv` as the output.
+   * ValvePlug uses `Source_ValvePlug` as input and `Builds_ValvePlug` as output folders.
+4. The source folders are structured identically as the desired post-install folder state should be (except for untouched game files, of course).
+   * The easiest way to set a source folder up is to just extract the relevant .7z archive of said mod/package straight into it, and then add/remove files as wanted.
+   * Note that `SpecialK.iss` and `Source` requires combining the compiled versions of Special K, SKIF, and SKIFsvc in their relevant places/subfolders.
+5. Right click the relevant Inno Setup Install Script (.iss) file, and click **Compile**.
+   * See the section above on which file corresponds to which installer.
+   * `Mod.iss` is shared between multiple installers -- edit the file and (un)comment the appropriate `#define <ModName>` at the top of the file to select which installer to build.
+6. Once the installer has been built, perform an installation for testing purposes to verify that everything works as intended.
+
 ## Third-party code
 
 * Features the music track [Stargazer](https://opengameart.org/content/stargazer) by [Centurion_of_war](https://opengameart.org/users/centurionofwar), licensed under [CC0 1.0 Universal (CC0 1.0) Public Domain Dedication](https://creativecommons.org/publicdomain/zero/1.0/).
