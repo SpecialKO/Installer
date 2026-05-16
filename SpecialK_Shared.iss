@@ -578,7 +578,7 @@ begin
               else // LAUnaware
               begin
                 Log('Executable is LAUnware, patching...');
-                if FileCopy(FileName, ChangeFileExt(FileName, '_LAUnaware.bak'), False) then
+                if CopyFile(FileName, ChangeFileExt(FileName, '_LAUnaware.bak'), False) then
                 begin
                   Stream.Seek(-1, soFromCurrent); // Move the cursor back one step
 

@@ -58,8 +58,8 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-ArchitecturesInstallIn64BitMode    = x64
-ArchitecturesAllowed               = x86 x64
+ArchitecturesInstallIn64BitMode    = x64compatible
+ArchitecturesAllowed               = x86compatible x64compatible
 MinVersion                         = 6.3.9600
 AppId                              = {{#SpecialKModUninstID}
 AppName                            = {#SpecialKName} ({#SpecialKModName}) for {#SpecialKGameName}
@@ -360,13 +360,22 @@ begin
 #if Defined BackupFile
     if FileExists(ExpandConstant('{app}\{#BackupFile}.bak')) then
     begin
-      Log('Restoring the original file: {#BackupFile}');
-      if not RenameFile(ExpandConstant('{app}\{#BackupFile}.bak'), ExpandConstant('{app}\{#BackupFile}')) then
+      // We assume install state of the rest of the game based on the presence of the P12E data folder.
+      if DirExists(ExpandConstant('{app}\P12E\')) then
       begin
-        if FileCopy(ExpandConstant('{app}\{#BackupFile}.bak'), ExpandConstant('{app}\{#BackupFile}'), False) then
+        Log('Restoring the original file: {#BackupFile}');
+        if not RenameFile(ExpandConstant('{app}\{#BackupFile}.bak'), ExpandConstant('{app}\{#BackupFile}')) then
         begin
-          DeleteFile(ExpandConstant('{app}\{#BackupFile}.bak'));
+          if CopyFile(ExpandConstant('{app}\{#BackupFile}.bak'), ExpandConstant('{app}\{#BackupFile}'), False) then
+          begin
+            DeleteFile(ExpandConstant('{app}\{#BackupFile}.bak'));
+          end;
         end;
+      end
+      else
+      begin
+        Log('Removing original file as the game have been uninstalled: {#BackupFile}');
+        DeleteFile(ExpandConstant('{app}\{#BackupFile}.bak'));
       end;
     end;
 #endif
