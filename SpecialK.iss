@@ -39,7 +39,7 @@ ArchitecturesAllowed               = x86compatible x64compatible
 ; Windows 8.1
 ; MinVersion                         = 6.3.9600
 ; Windows 7 SP1
-MinVersion                        = 6.1sp1
+MinVersion                         = 6.1sp1
 AppId                              = {{#SpecialKUninstID}
 AppName                            = {#SpecialKName}
 AppVersion                         = {#SpecialKVersion}  
@@ -48,7 +48,7 @@ AppPublisher                       = {#SpecialKPublisher}
 AppPublisherURL                    = {#SpecialKURL}
 AppSupportURL                      = {#SpecialKHelpURL}
 AppUpdatesURL                      = 
-AppCopyright                       = Copyleft 🄯 2015-2023
+AppCopyright                       = Copyleft 🄯 2015-2026
 VersionInfoVersion                 = {#SpecialKVersion}
 VersionInfoOriginalFileName        = SpecialK_{#SpecialKVersion}.exe
 VersionInfoCompany                 = {#SpecialKPublisher}
@@ -518,12 +518,17 @@ Type: filesandordirs; Name: "{app}\Fonts"
 
 
 [Registry]
-Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K 32-bit Global Injection Service Host";                 Flags: dontcreatekey uninsdeletevalue
-Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K 64-bit Global Injection Service Host";                 Flags: dontcreatekey uninsdeletevalue
-Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Special K";                                                      Flags: dontcreatekey uninsdeletevalue
-Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\SKIF.exe";     ValueType: string; ValueData: "{app}\{#SpecialKExeName}"; Flags: dontcreatekey uninsdeletekey   createvalueifdoesntexist
-Root: HKCU; Subkey: "SOFTWARE\Kaldaien\Special K";                   ValueName: "Path"; ValueType: string; ValueData: "{app}";                    Flags:               uninsdeletevalue createvalueifdoesntexist
-Root: HKCU; Subkey: "SOFTWARE\Kaldaien";                                                                                                          Flags: dontcreatekey uninsdeletekey
+Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run";                ValueName: "Special K 32-bit Global Injection Service Host";                   Flags: dontcreatekey  uninsdeletevalue
+Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run";                ValueName: "Special K 64-bit Global Injection Service Host";                   Flags: dontcreatekey  uninsdeletevalue
+Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run";                ValueName: "Special K";                                                        Flags: dontcreatekey  uninsdeletevalue
+Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\SKIF.exe";                    ValueType: string; ValueData: "{app}\{#SpecialKExeName}";   Flags: dontcreatekey  uninsdeletekey   createvalueifdoesntexist
+Root: HKCU; Subkey: "SOFTWARE\Kaldaien\Special K";                                  ValueName: "Path"; ValueType: string; ValueData: "{app}";                      Flags:                uninsdeletevalue createvalueifdoesntexist
+Root: HKCU; Subkey: "SOFTWARE\Kaldaien";                                                                                                                           Flags: dontcreatekey  uninsdeletekey
+Root: HKCU; Subkey: "SOFTWARE\Classes\exefile\Shell";                                                                                                              Flags: noerror        uninsdeletekeyifempty
+Root: HKCU; Subkey: "SOFTWARE\Classes\exefile\Shell\Start with SpecialK";                                                                                          Flags: noerror        uninsdeletekey;                            Tasks: contextmenu;
+Root: HKCU; Subkey: "SOFTWARE\Classes\exefile\Shell\Start with SpecialK";           ValueName: "Icon"; ValueType: string; ValueData: "{app}\{#SpecialKExeName},0"; Flags: noerror        uninsdeletevalue;                          Tasks: contextmenu;
+Root: HKCU; Subkey: "SOFTWARE\Classes\exefile\Shell\Start with SpecialK\command";                                                                                  Flags: noerror        uninsdeletekey;                            Tasks: contextmenu;
+Root: HKCU; Subkey: "SOFTWARE\Classes\exefile\Shell\Start with SpecialK\command";   ValueName: "";     ValueType: string; ValueData: "SKIF ""%1""";                Flags: noerror        uninsdeletevalue createvalueifdoesntexist; Tasks: contextmenu;
 
 
 [Files]
@@ -539,7 +544,9 @@ Source: "{#AssetsDir}\{#MusicFileName}";             DestDir: {tmp};            
 
 ; Main Special K files should always be overwritten
 Source: "{#SourceDir}\SKIF.exe";                     DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64;
-Source: "{#SourceDir}\SKIF32.exe";                   DestDir: "{app}";          Flags: ignoreversion;  DestName: "SKIF.exe";     Check: not IsWin64;  
+Source: "{#SourceDir}\SKIF32.exe";                   DestDir: "{app}";          Flags: ignoreversion;  DestName: "SKIF.exe";     Check: not IsWin64;
+Source: "{#SourceDir}\SKIV.exe";                     DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64;
+Source: "{#SourceDir}\XInput1_4.dll";                DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64 and IsWindows8OrLater;
 Source: "{#SourceDir}\SpecialK32.dll";               DestDir: "{app}";          Flags: ignoreversion;
 Source: "{#SourceDir}\SpecialK32.pdb";               DestDir: "{app}";          Flags: ignoreversion skipifsourcedoesntexist;
 Source: "{#SourceDir}\SpecialK64.dll";               DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64;
@@ -551,7 +558,7 @@ Source: "{#SourceDir}\Servlet\SKIFsvc32.exe";        DestDir: "{app}\Servlet";  
 
 ; Remaining files should only be created if they do not exist already.
 ; NOTE: This line causes the files included above to be counted twice in DiskSpaceMBLabel
-Source: "{#SourceDir}\*";                            DestDir: "{app}";          Flags: onlyifdoesntexist recursesubdirs createallsubdirs;  Excludes: "SKIF.exe,SKIF32.exe,\SpecialK32.dll,\SpecialK32.pdb,\SpecialK64.dll,\SpecialK64.pdb,\Servlet,\SpecialK32-AVX2.dll,\SpecialK64-AVX2.dll" 
+Source: "{#SourceDir}\*";                            DestDir: "{app}";          Flags: onlyifdoesntexist recursesubdirs createallsubdirs;  Excludes: "SKIF.exe,SKIF32.exe,\SpecialK32.dll,\SpecialK32.pdb,\SpecialK64.dll,\SpecialK64.pdb,\XInput1_4.dll,\Servlet,\SpecialK32-AVX2.dll,\SpecialK64-AVX2.dll" 
 
 
 [Dirs]
@@ -562,12 +569,13 @@ Name: "{app}\Profiles"
 [Tasks]
 Name: desktopicon;   Description: "Create &desktop shortcut";    
 Name: startmenu;     Description: "Create start menu shortcut";
+Name: contextmenu;   Description: "Add ""Start with SpecialK"" to context menu of .exe files.";   Flags: unchecked
 
 
 [Icons]
 Name: "{autoprograms}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: startmenu
 Name:  "{autodesktop}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: desktopicon
-Name:     "{userdocs}\My Mods\Special K";  Filename: "{app}";                       Check: TryExpandConstant('userdocs') and not IsCFAEnabled();
+Name:     "{userdocs}\My Mods\Special K";  Filename: "{app}";                       Check: TryExpandConstant('userdocs') and not IsCFAEnabled;
 
 
 [Run]
