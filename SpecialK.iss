@@ -34,8 +34,8 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-ArchitecturesInstallIn64BitMode    = x64
-ArchitecturesAllowed               = x86 x64
+ArchitecturesInstallIn64BitMode    = x64compatible
+ArchitecturesAllowed               = x86compatible x64compatible
 ; Windows 8.1
 ; MinVersion                         = 6.3.9600
 ; Windows 7 SP1
@@ -567,7 +567,7 @@ Name: startmenu;     Description: "Create start menu shortcut";
 [Icons]
 Name: "{autoprograms}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: startmenu
 Name:  "{autodesktop}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: desktopicon
-Name:     "{userdocs}\My Mods\Special K";  Filename: "{app}";                       Check: TryExpandConstant('userdocs');
+Name:     "{userdocs}\My Mods\Special K";  Filename: "{app}";                       Check: TryExpandConstant('userdocs') and not IsCFAEnabled();
 
 
 [Run]

@@ -946,7 +946,6 @@ begin
 end;
 
 
-
 // -----------
 // Procedure to extract a ZIP archive
 // -----------
@@ -974,6 +973,23 @@ begin
 
   TargetFolder.CopyHere(
     ZipFile.Items, SHCONTCH_NOPROGRESSBOX or SHCONTCH_RESPONDYESTOALL);
+end;
+
+
+// -----------
+// Check if Controlled Folder Access (CFA) is enabled
+// -----------
+// This is mostly used to determine if the shortcut in the Documents folder should be created.
+// Fixes https://github.com/SpecialKO/Installer/issues/2
+function IsCFAEnabled(): Boolean;
+var
+  CFAEnabled: String;
+begin
+  CFAEnabled := ExpandConstant('{reg:HKLM\SOFTWARE\Microsoft\Windows Defender\Windows Defender Exploit Guard\Controlled Folder Access,EnableControlledFolderAccess}');
+
+  Log(Format('EnableControlledFolderAccess: %s', [CFAEnabled]));
+
+  Result := (CompareText(CFAEnabled, '1') = 0); 
 end;
 
 
