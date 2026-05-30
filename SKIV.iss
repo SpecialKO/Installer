@@ -248,11 +248,11 @@ Root: HKCU; Subkey: "SOFTWARE\Kaldaien\Special K\Viewer";                       
 
 ; Main Special K files should always be overwritten
 Source: "{#SourceDir}\SKIV.exe";                     DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64;
-Source: "{#SourceDir}\SKIV32.exe";                   DestDir: "{app}";          Flags: ignoreversion;  DestName: "SKIV.exe";     Check: not IsWin64;
-Source: "{#SourceDir}\SpecialK32.dll";               DestDir: "{app}";          Flags: ignoreversion;
-Source: "{#SourceDir}\SpecialK32.pdb";               DestDir: "{app}";          Flags: ignoreversion skipifsourcedoesntexist;
 Source: "{#SourceDir}\SpecialK64.dll";               DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64;
 Source: "{#SourceDir}\SpecialK64.pdb";               DestDir: "{app}";          Flags: ignoreversion skipifsourcedoesntexist;    Check: IsWin64;
+Source: "{#SourceDir}\SKIV32.exe";                   DestDir: "{app}";          Flags: ignoreversion;  DestName: "SKIV.exe";     Check: not IsWin64;
+Source: "{#SourceDir}\SpecialK32.dll";               DestDir: "{app}";          Flags: ignoreversion;                            Check: not IsWin64;
+Source: "{#SourceDir}\SpecialK32.pdb";               DestDir: "{app}";          Flags: ignoreversion skipifsourcedoesntexist;    Check: not IsWin64;
 
 ; Remaining files should only be created if they do not exist already.
 ; NOTE: This line causes the files included above to be counted twice in DiskSpaceMBLabel
