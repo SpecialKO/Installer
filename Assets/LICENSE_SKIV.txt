@@ -1,0 +1,11 @@
+﻿MIT licensed:
+• SKIV (Special K Image Viewer) - https://github.com/SpecialKO/SKIV
+
+For third-party components used in SKIV and their respective license, see the README.md file of each individual repository.
+
+——————
+
+GPL-3.0 licensed:
+• Special K - https://github.com/SpecialKO/SpecialK
+
+For third-party components used in Special K and their respective license, see the /resource/licenses/ subfolder of the repository.

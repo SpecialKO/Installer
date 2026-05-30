@@ -14,6 +14,7 @@
 ; -----------
 #define SpecialKUninstID   "{F4A43527-9457-424A-90A6-17CF02ACF677}"
 #define SKIFdrvUninstID    "{A459BBFA-0819-49C4-8BF7-5BDF1559ED0C}"
+#define SKIVUninstID       "{1DF927E4-482B-402C-94E6-6E310CF33329}"
 #define ValvePlugUninstID  "{E100754B-5610-4DA5-A572-B37BE59B0562}"
 //#define SpecialKModUninstID "" // Holds AppID for game-specific mods; defined in the separate mod install scripts
 
@@ -195,7 +196,7 @@ end;
 function InitializeMusicPlayback(FileName: String): Boolean;
 begin
   if not WizardSilent() then
-  begin 
+  begin
     // Some nice background tunes
     Log('Preparing music components.');
     try
