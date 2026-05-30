@@ -67,9 +67,12 @@ SetupIconFile                      = {#AssetsDir}\icon.ico
 Compression                        = lzma2/ultra64
 SolidCompression                   = yes
 LZMAUseSeparateProcess             = yes
-WizardStyle                        = modern
+WizardStyle                        = modern dynamic windows11 hidebevels includetitlebar
+WizardImageFile                    = {#AssetsDir}\WizardImageFileZoom.bmp
+WizardImageFileDynamicDark         = {#AssetsDir}\WizardImageFileZoom.bmp
+WizardImageAlphaFormat             = defined
 WizardSmallImageFile               = {#AssetsDir}\WizardSmallImageFile.bmp
-WizardImageFile                    = {#AssetsDir}\WizardImageFile.bmp
+WizardSmallImageFileDynamicDark    = {#AssetsDir}\WizardSmallImageFile.bmp
 UninstallFilesDir                  = {app}\Servlet
 UninstallDisplayIcon               = {app}\SKIF.exe
 CloseApplications                  = yes
@@ -140,7 +143,9 @@ begin
     FixInnoSetupTaskbarPreview();
 
     // Have the disk spacel label appear here instead of later
-    WizardForm.DiskSpaceLabel.Parent := PageFromID(wpWelcome).Surface;
+    WizardForm.DiskSpaceLabel.Parent  := PageFromID(wpWelcome).Surface;
+    // Hide the disk spacel label
+    WizardForm.DiskSpaceLabel.Visible := False;
      
     InitializeMusicPlayback('{#MusicFileName}');
   end;
