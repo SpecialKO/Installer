@@ -267,7 +267,7 @@ begin
           // We need to use 'net' here regardless of Windows version due to Inno Setup bitness/file system redirection limitations
           // Specifically that {sysnative} or C:\Windows\sysnative\ or %windir%\sysnative is not usable with ShellExec 
           Log('Launching ''net'' elevated to add user (' + LocINTUserName + ') to the group (' + LocPLUGroupName + ').');
-          ShellExec('RunAs', 'net', 'localgroup "' + LocPLUGroupName + '" "' + LocINTUserName + '" /add', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
+          ShellExec('RunAs', ExpandConstant('{sys}\net.exe'), 'localgroup "' + LocPLUGroupName + '" "' + LocINTUserName + '" /add', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
 
           Sleep(500);
 
@@ -305,7 +305,7 @@ begin
           ExtractTemporaryFile('Unregister-AppInitDLLs.ps1');
                  
           Log('Calling an elevated Powershell session to run Unregister-AppInitDLLs.ps1');
-          ShellExec('RunAs', 'powershell', ExpandConstant('-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "{tmp}\Unregister-AppInitDLLs.ps1"'), '', SW_SHOW, ewWaitUntilTerminated, ResultCode);      
+          ShellExec('RunAs', ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), ExpandConstant('-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "{tmp}\Unregister-AppInitDLLs.ps1"'), '', SW_SHOW, ewWaitUntilTerminated, ResultCode);      
 
           Sleep(500);
 
@@ -486,7 +486,7 @@ begin
     begin
       UninstallProgressForm.StatusLabel.Caption := 'Running cleanup commands in an elevated process...';
       Log('Calling an elevated Powershell session with the following commands : ' + PowerShellArgs );
-      ShellExec('RunAs', 'powershell', '-NoProfile -NonInteractive -WindowStyle Hidden -Command "' + PowerShellArgs + '"', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
+      ShellExec('RunAs', ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), '-NoProfile -NonInteractive -WindowStyle Hidden -Command "' + PowerShellArgs + '"', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
       
       Sleep(500);
 
