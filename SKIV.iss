@@ -11,7 +11,7 @@
 #define SpecialKURL       "https://special-k.info/"
 #define SpecialKHelpURL   "https://wiki.special-k.info/"
 #define SpecialKForum     "https://discourse.differentk.fyi/"
-#define SpecialKDiscord   "https://discord.gg/specialk"
+#define SpecialKDiscord   "https://discord.special-k.info"
 #define SpecialKPatreon   "https://www.patreon.com/Kaldaien"
 #define SpecialKExeName   "SKIV.exe"                                                                                 
 #define SourceDir         "Source_SKIV"                   ; Keeps the files and folder structure of the install folder as intended post-install

@@ -14,7 +14,7 @@
 #define SpecialKURL       "https://github.com/SpecialKO/ValvePlug"
 #define SpecialKHelpURL   "https://github.com/SpecialKO/ValvePlug"
 #define SpecialKForum     "https://discourse.differentk.fyi/"
-#define SpecialKDiscord   "https://discord.gg/specialk"
+#define SpecialKDiscord   "https://discord.special-k.info"
 #define SpecialKPatreon   "https://www.patreon.com/Kaldaien"
 #define SpecialKExeName   "SKIF.exe"                                                                                 
 #define SourceDir         "Source_ValvePlug"              ; Keeps the files and folder structure of the install folder as intended post-install
