@@ -13,7 +13,7 @@
 #define SpecialKPublisher "The Special K Group"
 #define SpecialKURL       "https://github.com/SpecialKO/ValvePlug"
 #define SpecialKHelpURL   "https://github.com/SpecialKO/ValvePlug"
-#define SpecialKForum     "https://discourse.differentk.fyi/"
+#define SpecialKForum     "https://discourse.special-k.info/"
 #define SpecialKDiscord   "https://discord.special-k.info"
 #define SpecialKPatreon   "https://www.patreon.com/Kaldaien"
 #define SpecialKExeName   "SKIF.exe"                                                                                 

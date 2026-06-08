@@ -24,7 +24,7 @@
 #define SpecialKName          "Special K"
 #define SpecialKPublisher     "The Special K Group"
 #define SpecialKURL           "https://special-k.info/"
-#define SpecialKForum         "https://discourse.differentk.fyi/"
+#define SpecialKForum         "https://discourse.special-k.info/"
 #define SpecialKDiscord       "https://discord.special-k.info"
 #define SpecialKPatreon       "https://www.patreon.com/Kaldaien"
 #define RedistDir             "Redistributables"              ; Required dependencies and PowerShell helper scripts   

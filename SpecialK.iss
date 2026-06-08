@@ -13,7 +13,7 @@
 #define SpecialKPublisher "The Special K Group"
 #define SpecialKURL       "https://special-k.info/"
 #define SpecialKHelpURL   "https://wiki.special-k.info/"
-#define SpecialKForum     "https://discourse.differentk.fyi/"
+#define SpecialKForum     "https://discourse.special-k.info/"
 #define SpecialKDiscord   "https://discord.special-k.info"
 #define SpecialKPatreon   "https://www.patreon.com/Kaldaien"
 #define SpecialKExeName   "SKIF.exe"                                                                                 
