@@ -27,8 +27,8 @@
 #define SpecialKForum         "https://discourse.special-k.info/"
 #define SpecialKDiscord       "https://discord.special-k.info"
 #define SpecialKPatreon       "https://www.patreon.com/Kaldaien"
-#define RedistDir             "Redistributables"              ; Required dependencies and PowerShell helper scripts   
-#define OutputDir             "Builds_Mods"                   ; Output folder to put compiled builds of the installer   
+#define RedistDir             "Redistributables"              ; Required dependencies and PowerShell helper scripts
+#define OutputDir             "Builds_Mods"                   ; Output folder to put compiled builds of the installer
 #define AssetsDir             "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
 
 #if Defined Replicant ; NieR: Replicant
@@ -82,6 +82,7 @@
 
 #define SpecialKFileName      StringChange("SpecialK " + SpecialKModName + " " + SpecialKVersion, " ", "_")
 #define MusicFileName         "techno_stargazev2.1loop.mp3"
+#define MusicCreditURL        "https://opengameart.org/content/stargazer"
 
 #include "SpecialK_Shared.iss"
 
@@ -97,12 +98,12 @@ ArchitecturesAllowed               = x86 x64
 MinVersion                         = 6.3.9600
 AppId                              = {{#SpecialKModUninstID}
 AppName                            = {#SpecialKName} ({#SpecialKModName}) for {#SpecialKGameName}
-AppVersion                         = {#SpecialKVersion}  
+AppVersion                         = {#SpecialKVersion}
 AppVerName                         = {#SpecialKName} ({#SpecialKModName}) for {#SpecialKGameName}
 AppPublisher                       = {#SpecialKPublisher}
 AppPublisherURL                    = {#SpecialKURL}
 AppSupportURL                      = {#SpecialKHelpURL}
-AppUpdatesURL                      = 
+AppUpdatesURL                      =
 AppCopyright                       = Copyleft 🄯 2015-2022
 VersionInfoVersion                 = {#SpecialKVersion}
 VersionInfoOriginalFileName        = {#SpecialKFileName}.exe
@@ -142,7 +143,7 @@ SetupAppTitle    ={#SpecialKName} Setup
 SetupWindowTitle ={#SpecialKName} ({#SpecialKModName}) v {#SpecialKVersion} for {#SpecialKGameName}
 UninstallAppTitle={#SpecialKName} Uninstall
 WelcomeLabel2    =This will install {#SpecialKName} ({#SpecialKModName}) v {#SpecialKVersion} for {#SpecialKGameName} on your computer.%n%nLovingly referred to as the Swiss Army Knife of PC gaming, Special K does a bit of everything. It is best known for fixing and enhancing graphics, its many detailed performance analysis and correction mods, and a constantly growing palette of tools that solve a wide variety of issues affecting PC games.%n%nIt is recommended that you close all other applications before continuing.
-ConfirmUninstall =Are you sure you want to completely remove %1 and all of its components?%n%nThis may also remove any Special K ({#SpecialKModName}) game data (texture packs, configs, etc).  
+ConfirmUninstall =Are you sure you want to completely remove %1 and all of its components?%n%nThis may also remove any Special K ({#SpecialKModName}) game data (texture packs, configs, etc).
 DiskSpaceMBLabel =
 
 [Code]
@@ -168,49 +169,52 @@ begin
   // DirectX End-User Runtime
   //Dependency_AddDirectX;
   // Not required any longer following the removal of CEGUI
-  
+
   // 32-bit Visual C++ 2015-2022 Redistributable
   try
     Log('+ 32-bit Visual C++ 2015-2022 Redistributable');
     Dependency_ForceX86 := True;
     Dependency_AddVC2015To2022;
     Dependency_ForceX86 := False;
-  except 
+  except
     Log('Catastrophic error in InitializeSetup() for 32-bit Visual C++ 2015-2022 Redistributable!');
     // Surpresses exception when an issue prevents proper lookup
   end;
-      
+
   // 64-bit Visual C++ 2015-2022 Redistributable
   if IsWin64 then
   begin
     try
       Log('+ 64-bit Visual C++ 2015-2022 Redistributable');
       Dependency_AddVC2015To2022;
-    except 
+    except
       Log('Catastrophic error in InitializeSetup() for 64-bit Visual C++ 2015-2022 Redistributable!');
       // Surpresses exception when an issue prevents proper lookup
     end;
   end;
 
   Result := True;
-end;  
+end;
 
 
 procedure InitializeWizard();
-begin 
+begin
   Log('Initializing Wizard.');
 
   if not WizardSilent() then
-  begin 
+  begin
     FixInnoSetupTaskbarPreview();
 
     // Have the disk spacel label appear here instead of later
-    WizardForm.DiskSpaceLabel.Parent := PageFromID(wpWelcome).Surface;
+    WizardForm.DiskSpaceLabel.Parent  := PageFromID(wpWelcome).Surface;
+    // Hide the disk spacel label
+    WizardForm.DiskSpaceLabel.Visible := False;
 
     // Sets up the download page
     DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), SetupMessage(msgPreparingDesc), @OnDownloadProgress);
-   
-    InitializeMusicPlayback('{#MusicFileName}');
+
+    InitializePatreonButton();
+    InitializeMusicPlayback('{#MusicFileName}', '{#MusicCreditURL}', False);
   end;
 end;
 
@@ -226,7 +230,7 @@ var
   AdditionalTasks : String;
 begin
   if CurPageID = wpReady then
-  begin 
+  begin
     Log('Initializing Ready Page.');
 
     Wizardform.ReadyMemo.Font.Name := 'Consolas';
@@ -243,11 +247,11 @@ begin
     Wizardform.ReadyMemo.Lines.Add('');
 
     // And finally if there is any additional tasks from Inno Setup or CodeDependencies.iss, add them back.
-    Wizardform.ReadyMemo.Lines.Add(AdditionalTasks); 
+    Wizardform.ReadyMemo.Lines.Add(AdditionalTasks);
 
     Wizardform.ReadyMemo.Show;
   end;
-end;                
+end;
 
 
 #if Defined DownloadURL
@@ -289,15 +293,15 @@ var
   WasVisible       : Boolean;
   ResultCode       : Integer;
 
-begin 
+begin
   Log('Preparing Install.');
 
   WasVisible   := WizardForm.PreparingLabel.Visible;
   Result       := '';
   ResultCode   := 0;
 
-  try 
-    Log('Establishing WMI connection...'); 
+  try
+    Log('Establishing WMI connection...');
     WbemLocator   := CreateOleObject('WbemScripting.SWbemLocator');
     WbemServices  := WbemLocator.ConnectServer('localhost', 'root\CIMV2');
 
@@ -325,7 +329,7 @@ begin
         if ResultCode <> 0 then
         begin
           Log('Failed to grant permission : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
-        end;      
+        end;
       end;
 
       ResultCode   := 0;
@@ -339,8 +343,8 @@ begin
     MakeExecutableLAAware(ExpandConstant('{app}\FFX-2.exe'));
     MakeExecutableLAAware(ExpandConstant('{app}\FFX&X-2_Will.exe'));
 #endif
-  
-  except 
+
+  except
     Log('Catastrophic error in PrepareToInstall()!');
     // Surpresses exception when task does not exist or another issue prevents proper lookup
   finally
@@ -475,7 +479,7 @@ Filename: "{#SpecialKPatreon}";                     Description: "Support the pr
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\CEGUI"
 Type: filesandordirs; Name: "{app}\SK_Res"
-Type: filesandordirs; Name: "{app}\Version" 
+Type: filesandordirs; Name: "{app}\Version"
 Type: filesandordirs; Name: "{app}\logs"
 Type: files;          Name: "{app}\dxgi.ini"
 Type: files;          Name: "{app}\d3d9.ini"

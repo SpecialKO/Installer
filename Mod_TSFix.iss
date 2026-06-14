@@ -17,8 +17,8 @@
 #define SpecialKForum         "https://discourse.special-k.info/"
 #define SpecialKDiscord       "https://discord.special-k.info"
 #define SpecialKPatreon       "https://www.patreon.com/Kaldaien"
-#define RedistDir             "Redistributables"              ; Required dependencies and PowerShell helper scripts   
-#define OutputDir             "Builds_Mods"                   ; Output folder to put compiled builds of the installer   
+#define RedistDir             "Redistributables"              ; Required dependencies and PowerShell helper scripts
+#define OutputDir             "Builds_Mods"                   ; Output folder to put compiled builds of the installer
 #define AssetsDir             "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
 
 #if Defined TSFix ; Tales of Symphonia
@@ -46,8 +46,9 @@
   #define Link_dlc_cleanup_4k_upscale  "https://sk-data.special-k.info/TSFix/99_Upscale4x.7z"
 #endif
 
-#define SpecialKFileName  StringChange("SpecialK " + SpecialKModName + " " + SpecialKVersion, " ", "_") 
+#define SpecialKFileName  StringChange("SpecialK " + SpecialKModName + " " + SpecialKVersion, " ", "_")
 #define MusicFileName     "techno_stargazev2.1loop.mp3"
+#define MusicCreditURL    "https://opengameart.org/content/stargazer"
 
 #include "SpecialK_Shared.iss"
 
@@ -63,12 +64,12 @@ ArchitecturesAllowed               = x86compatible x64compatible
 MinVersion                         = 6.3.9600
 AppId                              = {{#SpecialKModUninstID}
 AppName                            = {#SpecialKName} ({#SpecialKModName}) for {#SpecialKGameName}
-AppVersion                         = {#SpecialKVersion}  
+AppVersion                         = {#SpecialKVersion}
 AppVerName                         = {#SpecialKName} ({#SpecialKModName}) for {#SpecialKGameName}
 AppPublisher                       = {#SpecialKPublisher}
 AppPublisherURL                    = {#SpecialKURL}
 AppSupportURL                      = {#SpecialKHelpURL}
-AppUpdatesURL                      = 
+AppUpdatesURL                      =
 AppCopyright                       = Copyleft 🄯 2015-2022
 VersionInfoVersion                 = {#SpecialKVersion}
 VersionInfoOriginalFileName        = {#SpecialKFileName}.exe
@@ -108,7 +109,7 @@ SetupAppTitle    ={#SpecialKName} Setup
 SetupWindowTitle ={#SpecialKName} ({#SpecialKModName}) v {#SpecialKVersion} for {#SpecialKGameName}
 UninstallAppTitle={#SpecialKName} Uninstall
 WelcomeLabel2    =This will install {#SpecialKName} ({#SpecialKModName}) v {#SpecialKVersion} for {#SpecialKGameName} on your computer.%n%nLovingly referred to as the Swiss Army Knife of PC gaming, Special K does a bit of everything. It is best known for fixing and enhancing graphics, its many detailed performance analysis and correction mods, and a constantly growing palette of tools that solve a wide variety of issues affecting PC games.%n%nIt is recommended that you close all other applications before continuing.
-ConfirmUninstall =Are you sure you want to completely remove %1 and all of its components?  
+ConfirmUninstall =Are you sure you want to completely remove %1 and all of its components?
 DiskSpaceMBLabel =
 
 [Code]
@@ -145,24 +146,24 @@ end;
 // Dependency handler
 function InitializeSetup: Boolean;
 begin
-  Log('Initializing Setup.'); 
+  Log('Initializing Setup.');
 
   Log('Required dependencies:');
 
   // DirectX End-User Runtime
   //Dependency_AddDirectX;
-  
+
   // 32-bit Visual C++ 2015-2022 Redistributable
   try
     Log('+ 32-bit Visual C++ 2015-2022 Redistributable');
     Dependency_ForceX86 := True;
     Dependency_AddVC2015To2022;
     Dependency_ForceX86 := False;
-  except 
+  except
     Log('Catastrophic error in InitializeSetup() for 32-bit Visual C++ 2015-2022 Redistributable!');
     // Surpresses exception when an issue prevents proper lookup
   end;
-      
+
   // 64-bit Visual C++ 2015-2022 Redistributable
   (*
   if IsWin64 then
@@ -170,7 +171,7 @@ begin
     try
       Log('+ 64-bit Visual C++ 2015-2022 Redistributable');
       Dependency_AddVC2015To2022;
-    except 
+    except
       Log('Catastrophic error in InitializeSetup() for 64-bit Visual C++ 2015-2022 Redistributable!');
       // Surpresses exception when an issue prevents proper lookup
     end;
@@ -178,26 +179,29 @@ begin
   *)
 
   Result := True;
-end;  
+end;
 
 
 procedure InitializeWizard();
-begin 
+begin
   Log('Initializing Wizard.');
 
   if not WizardSilent() then
-  begin 
+  begin
     FixInnoSetupTaskbarPreview();
 
     // Have the disk spacel label appear here instead of later
-    WizardForm.DiskSpaceLabel.Parent := PageFromID(wpWelcome).Surface;
+    WizardForm.DiskSpaceLabel.Parent  := PageFromID(wpWelcome).Surface;
+    // Hide the disk spacel label
+    WizardForm.DiskSpaceLabel.Visible := False;
 
     // Sets up the download page
     DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), SetupMessage(msgPreparingDesc), @OnDownloadProgress);
 
-    InitializeMusicPlayback('{#MusicFileName}');
+    InitializePatreonButton();
+    InitializeMusicPlayback('{#MusicFileName}', '{#MusicCreditURL}', False);
   end;
- 
+
   DisplayWidth  := GetSystemMetrics(SM_CXSCREEN);
   DisplayHeight := GetSystemMetrics(SM_CYSCREEN);
 
@@ -206,7 +210,7 @@ end;
 
 
 procedure DeinitializeSetup();
-begin 
+begin
   DeinitializeMusicPlayback();
 end;
 
@@ -216,7 +220,7 @@ var
   AdditionalTasks : String;
 begin
   if CurPageID = wpReady then
-  begin 
+  begin
     Log('Initializing Ready Page.');
 
     Wizardform.ReadyMemo.Font.Name := 'Consolas';
@@ -233,11 +237,11 @@ begin
     Wizardform.ReadyMemo.Lines.Add('');
 
     // And finally if there is any additional tasks from Inno Setup or CodeDependencies.iss, add them back.
-    Wizardform.ReadyMemo.Lines.Add(AdditionalTasks); 
+    Wizardform.ReadyMemo.Lines.Add(AdditionalTasks);
 
     Wizardform.ReadyMemo.Show;
   end;
-end;                
+end;
 
 
 // Code that downloads the optional selected tasks
@@ -291,15 +295,15 @@ var
   WasVisible       : Boolean;
   ResultCode       : Integer;
 
-begin 
+begin
   Log('Preparing Install.');
 
   WasVisible   := WizardForm.PreparingLabel.Visible;
   Result       := '';
   ResultCode   := 0;
 
-  try 
-    Log('Establishing WMI connection...'); 
+  try
+    Log('Establishing WMI connection...');
     WbemLocator   := CreateOleObject('WbemScripting.SWbemLocator');
     WbemServices  := WbemLocator.ConnectServer('localhost', 'root\CIMV2');
 
@@ -327,7 +331,7 @@ begin
         if ResultCode <> 0 then
         begin
           Log('Failed to grant permission : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
-        end;      
+        end;
       end;
 
       ResultCode   := 0;
@@ -341,8 +345,8 @@ begin
     MakeExecutableLAAware(ExpandConstant('{app}\FFX-2.exe'));
     MakeExecutableLAAware(ExpandConstant('{app}\FFX&X-2_Will.exe'));
 #endif
-  
-  except 
+
+  except
     Log('Catastrophic error in PrepareToInstall()!');
     // Surpresses exception when task does not exist or another issue prevents proper lookup
   finally
@@ -391,10 +395,10 @@ Type: files;          Name: "{app}\TSFix_Res\inject\{#File_dlc_cleanup_ui}";    
 Type: files;          Name: "{app}\TSFix_Res\inject\{#File_dlc_cleanup_effects}";       Tasks: not dlc_cleanup_effects;
 Type: files;          Name: "{app}\TSFix_Res\inject\{#File_dlc_cleanup_characters}";    Tasks: not dlc_cleanup_characters;
 Type: files;          Name: "{app}\TSFix_Res\inject\{#File_dlc_cleanup_font}";          Tasks: not dlc_cleanup_font;
-; Button mods        
+; Button mods
 Type: files;          Name: "{app}\TSFix_Res\inject\{#File_dlc_gamepad_ps3}";           Tasks: not dlc_gamepad_ps3;
 Type: files;          Name: "{app}\TSFix_Res\inject\{#File_dlc_gamepad_gc}";            Tasks: not dlc_gamepad_gc;
-; 4K texture pack (downloaded during install) 
+; 4K texture pack (downloaded during install)
 Type: files;          Name: "{app}\TSFix_Res\inject\{#File_dlc_cleanup_4k_upscale}";    Tasks: not dlc_cleanup_4k_upscale;
 
 
@@ -446,11 +450,11 @@ Source: "{tmp}\{#File_dlc_cleanup_4k_upscale}";                           DestDi
 Name: dlc_cleanup_4k_upscale;     Flags: unchecked;              GroupDescription: "General texture packs:";    Description: "4K upscaled textures (downloads 5 GB of additional data)";
 Name: dlc_cleanup_ui;             Flags: ;                       GroupDescription: "General texture packs:";    Description: "Cleaned up UI";
 Name: dlc_cleanup_effects;        Flags: ;                       GroupDescription: "General texture packs:";    Description: "Cleaned up cloud and visual effects";
-Name: dlc_cleanup_characters;     Flags: ;                       GroupDescription: "General texture packs:";    Description: "Cleaned up characters"; 
+Name: dlc_cleanup_characters;     Flags: ;                       GroupDescription: "General texture packs:";    Description: "Cleaned up characters";
 Name: dlc_cleanup_font;           Flags: ;                       GroupDescription: "General texture packs:";    Description: "Cleaned up font";
 
 ; The Xbox buttons are a part of the game, so if that task is checked we just remove the other button mods
-Name: dlc_gamepad_xbox;           Flags: exclusive;              GroupDescription: "Button prompts:";           Description: "Xbox";                        
+Name: dlc_gamepad_xbox;           Flags: exclusive;              GroupDescription: "Button prompts:";           Description: "Xbox";
 Name: dlc_gamepad_ps3;            Flags: unchecked exclusive;    GroupDescription: "Button prompts:";           Description: "Playstation 3";
 Name: dlc_gamepad_gc;             Flags: unchecked exclusive;    GroupDescription: "Button prompts:";           Description: "GameCube";
 
@@ -485,7 +489,7 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags
 Type: filesandordirs; Name: "{app}\CEGUI"
 Type: filesandordirs; Name: "{app}\SK_Res"
 Type: filesandordirs; Name: "{app}\Version"
-Type: filesandordirs; Name: "{app}\TSFix_Res" 
+Type: filesandordirs; Name: "{app}\TSFix_Res"
 Type: filesandordirs; Name: "{app}\logs"
 Type: files;          Name: "{app}\d3d9.ini"
 Type: files;          Name: "{app}\tsfix.ini"
