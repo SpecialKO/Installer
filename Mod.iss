@@ -93,8 +93,8 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-ArchitecturesInstallIn64BitMode    = x64
-ArchitecturesAllowed               = x86 x64
+ArchitecturesInstallIn64BitMode    = x64compatible
+ArchitecturesAllowed               = x86compatible x64compatible
 MinVersion                         = 6.3.9600
 AppId                              = {{#SpecialKModUninstID}
 AppName                            = {#SpecialKName} ({#SpecialKModName}) for {#SpecialKGameName}
@@ -123,9 +123,13 @@ SetupIconFile                      = {#AssetsDir}\icon.ico
 Compression                        = lzma2/ultra64
 SolidCompression                   = yes
 LZMAUseSeparateProcess             = yes
-WizardStyle                        = modern
+;WizardSizePercent                 = 120,120
+WizardStyle                        = modern dynamic windows11 hidebevels includetitlebar
+WizardImageFile                    = {#AssetsDir}\WizardImageFileZoom.bmp
+WizardImageFileDynamicDark         = {#AssetsDir}\WizardImageFileZoom.bmp
+WizardImageAlphaFormat             = defined
 WizardSmallImageFile               = {#AssetsDir}\WizardSmallImageFile.bmp
-WizardImageFile                    = {#AssetsDir}\WizardImageFile.bmp
+WizardSmallImageFileDynamicDark    = {#AssetsDir}\WizardSmallImageFile.bmp
 UninstallFilesDir                  = {app}\Version\
 UninstallDisplayIcon               = {app}\Version\unins000.exe
 CloseApplications                  = yes
@@ -365,7 +369,7 @@ begin
       Log('Restoring the original file: {#BackupFile}');
       if not RenameFile(ExpandConstant('{app}\{#BackupFile}.bak'), ExpandConstant('{app}\{#BackupFile}')) then
       begin
-        if FileCopy(ExpandConstant('{app}\{#BackupFile}.bak'), ExpandConstant('{app}\{#BackupFile}'), False) then
+        if CopyFile(ExpandConstant('{app}\{#BackupFile}.bak'), ExpandConstant('{app}\{#BackupFile}'), False) then
         begin
           DeleteFile(ExpandConstant('{app}\{#BackupFile}.bak'));
         end;
@@ -379,7 +383,7 @@ begin
       Log('Restoring the original file: FFX.exe');
       if not RenameFile(ExpandConstant('{app}\FFX_LAUnaware.bak'), ExpandConstant('{app}\FFX.exe')) then
       begin
-        if FileCopy(ExpandConstant('{app}\FFX_LAUnaware.bak'), ExpandConstant('{app}\FFX.exe'), False) then
+        if CopyFile(ExpandConstant('{app}\FFX_LAUnaware.bak'), ExpandConstant('{app}\FFX.exe'), False) then
         begin
           DeleteFile(ExpandConstant('{app}\FFX_LAUnaware.bak'));
         end;
@@ -391,7 +395,7 @@ begin
       Log('Restoring the original file: FFX-2.exe');
       if not RenameFile(ExpandConstant('{app}\FFX-2_LAUnaware.bak'), ExpandConstant('{app}\FFX-2.exe')) then
       begin
-        if FileCopy(ExpandConstant('{app}\FFX-2_LAUnaware.bak'), ExpandConstant('{app}\FFX-2.exe'), False) then
+        if CopyFile(ExpandConstant('{app}\FFX-2_LAUnaware.bak'), ExpandConstant('{app}\FFX-2.exe'), False) then
         begin
           DeleteFile(ExpandConstant('{app}\FFX-2_LAUnaware.bak'));
         end;
@@ -403,7 +407,7 @@ begin
       Log('Restoring the original file: FFX&X-2_Will.exe');
       if not RenameFile(ExpandConstant('{app}\FFX&X-2_Will_LAUnaware.bak'), ExpandConstant('{app}\FFX&X-2_Will.exe')) then
       begin
-        if FileCopy(ExpandConstant('{app}\FFX&X-2_Will_LAUnaware.bak'), ExpandConstant('{app}\FFX&X-2_Will.exe'), False) then
+        if CopyFile(ExpandConstant('{app}\FFX&X-2_Will_LAUnaware.bak'), ExpandConstant('{app}\FFX&X-2_Will.exe'), False) then
         begin
           DeleteFile(ExpandConstant('{app}\FFX&X-2_Will_LAUnaware.bak'));
         end;

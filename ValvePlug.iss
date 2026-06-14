@@ -33,12 +33,9 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-ArchitecturesInstallIn64BitMode    = x64
-ArchitecturesAllowed               = x86 x64
-; Windows 8.1
-; MinVersion                         = 6.3.9600
-; Windows 7 SP1
-MinVersion                        = 6.1sp1
+ArchitecturesInstallIn64BitMode    = x64compatible
+ArchitecturesAllowed               = x86compatible x64compatible
+MinVersion                         = 6.3.9600
 AppId                              = {{#ValvePlugUninstID}
 AppName                            = {#SpecialKName}
 AppVersion                         = {#SpecialKVersion}
@@ -66,9 +63,13 @@ SetupIconFile                      = {#AssetsDir}\icon.ico
 Compression                        = lzma2/ultra64
 SolidCompression                   = yes
 LZMAUseSeparateProcess             = yes
-WizardStyle                        = modern
+;WizardSizePercent                 = 120,120
+WizardStyle                        = modern dynamic windows11 hidebevels includetitlebar
+WizardImageFile                    = {#AssetsDir}\WizardImageFileZoom.bmp
+WizardImageFileDynamicDark         = {#AssetsDir}\WizardImageFileZoom.bmp
+WizardImageAlphaFormat             = defined
 WizardSmallImageFile               = {#AssetsDir}\WizardSmallImageFile.bmp
-WizardImageFile                    = {#AssetsDir}\WizardImageFile.bmp
+WizardSmallImageFileDynamicDark    = {#AssetsDir}\WizardSmallImageFile.bmp
 UninstallFilesDir                  = {autopf}\ValvePlug
 UninstallDisplayIcon               = {autopf}\ValvePlug\unins000.exe
 CloseApplications                  = yes
