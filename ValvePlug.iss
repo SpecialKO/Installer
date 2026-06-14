@@ -16,13 +16,12 @@
 #define SpecialKForum     "https://discourse.special-k.info/"
 #define SpecialKDiscord   "https://discord.special-k.info"
 #define SpecialKPatreon   "https://www.patreon.com/Kaldaien"
-#define SpecialKExeName   "SKIF.exe"                                                                                 
+#define SpecialKExeName   "SKIF.exe"
 #define SourceDir         "Source_ValvePlug"              ; Keeps the files and folder structure of the install folder as intended post-install
-#define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts   
-#define OutputDir         "Builds_ValvePlug"              ; Output folder to put compiled builds of the installer   
+#define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts
+#define OutputDir         "Builds_ValvePlug"              ; Output folder to put compiled builds of the installer
 #define AssetsDir         "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
 #define SpecialKVersion   GetStringFileInfo(SourceDir + '\XInput1_4.dll', "ProductVersion") ; ProductVersion
-;#define MusicFileName     "techno_stargazev2.1loop.mp3"
 #define SteamAppID        "0"
 
 #include "SpecialK_Shared.iss"
@@ -42,12 +41,12 @@ ArchitecturesAllowed               = x86 x64
 MinVersion                        = 6.1sp1
 AppId                              = {{#ValvePlugUninstID}
 AppName                            = {#SpecialKName}
-AppVersion                         = {#SpecialKVersion}  
+AppVersion                         = {#SpecialKVersion}
 AppVerName                         = {#SpecialKName}
 AppPublisher                       = {#SpecialKPublisher}
 AppPublisherURL                    = {#SpecialKURL}
 AppSupportURL                      = {#SpecialKHelpURL}
-AppUpdatesURL                      = 
+AppUpdatesURL                      =
 AppCopyright                       = Copyleft 🄯 2024
 VersionInfoVersion                 = {#SpecialKVersion}
 VersionInfoOriginalFileName        = ValvePlug_{#SpecialKVersion}.exe
@@ -60,7 +59,7 @@ DefaultGroupName                   = {#SpecialKName}
 DisableProgramGroupPage            = yes
 LicenseFile                        = {#AssetsDir}\LICENSE_ValvePlug.txt
 PrivilegesRequired                 = lowest
-PrivilegesRequiredOverridesAllowed = 
+PrivilegesRequiredOverridesAllowed =
 OutputDir                          = {#OutputDir}
 OutputBaseFilename                 = ValvePlug_{#SpecialKVersion}
 SetupIconFile                      = {#AssetsDir}\icon.ico
@@ -87,7 +86,7 @@ SetupAppTitle    ={#SpecialKName} Setup
 SetupWindowTitle ={#SpecialKName} v {#SpecialKVersion}
 UninstallAppTitle={#SpecialKName} Uninstall
 WelcomeLabel2    =This will install the {#SpecialKName} v {#SpecialKVersion}.%n%nValve Plug is a XInput1_4.dll based drop-in patch to the Steam client to deny it access to input devices using the XInput API and any API that opens handles to HID devices, disabling the Steam Input feature and all related functionality.%n%nThis patch was created because the built-in options of the Steam client labeled "Off" give end-users the illusion of control when in reality none of them, or any combination thereof, allows the user to fully disable Steam Input and its various device enumeration and initialization code.
-ConfirmUninstall =Are you sure you want to completely remove the %1 and all of its components?%n%nThis will restore Steam Input and all related functionality.  
+ConfirmUninstall =Are you sure you want to completely remove the %1 and all of its components?%n%nThis will restore Steam Input and all related functionality.
 DiskSpaceMBLabel =
 
 
@@ -111,55 +110,66 @@ begin
 end;
 
 
+function InitializeReadMoreButton(): Boolean;
+begin
+  if not WizardSilent() then
+  begin
+    // Create the UI elements
+    ReadMoreButton         := TNewButton.Create(WizardForm);
+    ReadMoreButton.Parent  := WizardForm;
+    ReadMoreButton.Left    := GetNextCustomButtonLeft(False);
+    ReadMoreButton.Top     := WizardForm.NextButton.Top;
+    ReadMoreButton.Width   := WizardForm.NextButton.Width;
+    ReadMoreButton.Height  := WizardForm.NextButton.Height;
+    ReadMoreButton.Caption := 'Read More';
+    ReadMoreButton.OnClick := @ReadMoreButtonClick;
+    ReadMoreButton.Anchors := [akLeft, akBottom];
+
+    RegisterCustomButton(ReadMoreButton);
+
+    Result := True
+  end;
+end;
+
+
 // Dependency handler
 function InitializeSetup: Boolean;
 begin
   Log('Initializing Setup.');
 
   Log('Required dependencies:');
-  
+
   // 32-bit Visual C++ 2015-2022 Redistributable
   try
     Log('+ 32-bit Visual C++ 2015-2022 Redistributable');
     Dependency_ForceX86 := True;
     Dependency_AddVC2015To2022;
     Dependency_ForceX86 := False;
-  except 
+  except
     Log('Catastrophic error in InitializeSetup() for 32-bit Visual C++ 2015-2022 Redistributable!');
     // Surpresses exception when an issue prevents proper lookup
   end;
 
   Result := True;
-end;  
+end;
 
 
 procedure InitializeWizard();
-begin 
+begin
   Log('Initializing Wizard.');
 
   if not WizardSilent() then
-  begin 
+  begin
     FixInnoSetupTaskbarPreview();
 
     // Have the disk spacel label appear here instead of later
-    WizardForm.DiskSpaceLabel.Parent := PageFromID(wpWelcome).Surface;
-     
-    //InitializeMusicPlayback('{#MusicFileName}');
-  end;
+    WizardForm.DiskSpaceLabel.Parent  := PageFromID(wpWelcome).Surface;
+    // Hide the disk spacel label
+    WizardForm.DiskSpaceLabel.Visible := False;
 
-  // Create Read Mode button
-  ReadMoreButton         := TNewButton.Create(WizardForm);
-  ReadMoreButton.Parent  := WizardForm;
-  ReadMoreButton.Left    :=
-    WizardForm.ClientWidth -
-    WizardForm.CancelButton.Left - 
-    WizardForm.CancelButton.Width;
-  ReadMoreButton.Top     := WizardForm.CancelButton.Top; //WizardForm.CancelButton.Top + 50;
-  ReadMoreButton.Width   := WizardForm.CancelButton.Width;
-  ReadMoreButton.Height  := WizardForm.CancelButton.Height;
-  ReadMoreButton.Caption := 'Read More';
-  ReadMoreButton.OnClick := @ReadMoreButtonClick;
-  ReadMoreButton.Anchors := [akLeft, akBottom];
+    InitializeReadMoreButton();
+    InitializePatreonButton();
+  end;
 end;
 
 
@@ -174,7 +184,7 @@ var
   AdditionalTasks : String;
 begin
   if CurPageID = wpReady then
-  begin 
+  begin
     Log('Initializing Ready Page.');
 
     Wizardform.ReadyMemo.Font.Name := 'Consolas';
@@ -202,7 +212,7 @@ begin
     //end;
 
     // And finally if there is any additional tasks from Inno Setup or CodeDependencies.iss, add them back.
-    Wizardform.ReadyMemo.Lines.Add(AdditionalTasks); 
+    Wizardform.ReadyMemo.Lines.Add(AdditionalTasks);
 
     Wizardform.ReadyMemo.Show;
   end;
@@ -214,7 +224,7 @@ var
   WasVisible       : Boolean;
   InstallFolder    : String;
 
-begin 
+begin
   Log('Preparing Install.');
 
   DefaultCaption := WizardForm.PreparingLabel.Caption;
@@ -232,7 +242,7 @@ begin
     InstallFolder := ExpandConstant('{app}');
 
     if (IsSteamRunning()) and (FileExists(InstallFolder + '\Steam.exe')) then
-    begin 
+    begin
       Log('Steam.exe file check : detected');
       WizardForm.PreparingLabel.Caption := 'Shutting down Steam...';
       if StopSteam() then
@@ -242,8 +252,8 @@ begin
         until not IsSteamRunning();
       end;
     end;
-  
-  except 
+
+  except
     Log('Catastrophic error in PrepareToInstall()!');
     // Surpresses exception when task does not exist or another issue prevents proper lookup
   finally
@@ -259,16 +269,16 @@ var
   InstallFolder    : String;
 begin
   if CurUninstallStep = usUninstall then
-  begin 
+  begin
     Log('Preparing Uninstall.');
 
     DefaultCaption := UninstallProgressForm.StatusLabel.Caption;
     InstallFolder := ExpandConstant('{app}');
 
     if (IsSteamRunning()) and (FileExists(InstallFolder + '\Steam.exe')) then
-    begin 
+    begin
       Log('Steam.exe file check : detected');
-      UninstallProgressForm.StatusLabel.Caption := 'Shutting down Steam...'; 
+      UninstallProgressForm.StatusLabel.Caption := 'Shutting down Steam...';
       if StopSteam() then
       begin
         repeat
@@ -327,7 +337,7 @@ Source: "{#SourceDir}\XInput1_4.dll";                DestDir: "{app}";          
 
 ; Remaining files should only be created if they do not exist already.
 ; NOTE: This line causes the files included above to be counted twice in DiskSpaceMBLabel
-;Source: "{#SourceDir}\*";                            DestDir: "{app}";          Flags: skipifsourcedoesntexist onlyifdoesntexist recursesubdirs createallsubdirs;  Excludes: "XInput1_4.dll" 
+;Source: "{#SourceDir}\*";                            DestDir: "{app}";          Flags: skipifsourcedoesntexist onlyifdoesntexist recursesubdirs createallsubdirs;  Excludes: "XInput1_4.dll"
 
 
 [Run]

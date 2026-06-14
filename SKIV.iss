@@ -13,13 +13,12 @@
 #define SpecialKForum     "https://discourse.special-k.info/"
 #define SpecialKDiscord   "https://discord.special-k.info"
 #define SpecialKPatreon   "https://www.patreon.com/Kaldaien"
-#define SpecialKExeName   "SKIV.exe"                                                                                 
+#define SpecialKExeName   "SKIV.exe"
 #define SourceDir         "Source_SKIV"                   ; Keeps the files and folder structure of the install folder as intended post-install
-#define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts   
-#define OutputDir         "Builds_SKIV"                   ; Output folder to put compiled builds of the installer   
+#define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts
+#define OutputDir         "Builds_SKIV"                   ; Output folder to put compiled builds of the installer
 #define AssetsDir         "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
 #define SKIVVersion       GetStringFileInfo(SourceDir + '\SKIV.exe',       "ProductVersion")
-#define MusicFileName     "techno_stargazev2.1loop.mp3"
 
 #include "SpecialK_Shared.iss"
 
@@ -43,7 +42,7 @@ AppVerName                         = {#SpecialKName}
 AppPublisher                       = {#SpecialKPublisher}
 AppPublisherURL                    = {#SpecialKURL}
 AppSupportURL                      = {#SpecialKHelpURL}
-AppUpdatesURL                      = 
+AppUpdatesURL                      =
 AppCopyright                       = Copyleft 🄯 2026
 VersionInfoVersion                 = {#SKIVVersion}
 VersionInfoOriginalFileName        = SKIV_{#SKIVVersion}.exe
@@ -84,7 +83,7 @@ SetupAppTitle    ={#SpecialKName} Setup
 SetupWindowTitle ={#SpecialKName} v {#SKIVVersion}
 UninstallAppTitle={#SpecialKName} Uninstall
 WelcomeLabel2    =This will install {#SpecialKName} v {#SKIVVersion} on your computer.%n%nPortable HDR image viewer, screen capture/snipping, tonemapping and analysis tool with decode/encode/transcode for JPEG-XR, JPEG-XL, AVIF, Radiance HDR, OpenEXR, UltraHDR and PNG.%n%nIt is recommended that you close all other applications before continuing.
-ConfirmUninstall =Are you sure you want to completely remove %1 and all of its components? 
+ConfirmUninstall =Are you sure you want to completely remove %1 and all of its components?
 DiskSpaceMBLabel =
 
 
@@ -101,53 +100,55 @@ begin
   // DirectX End-User Runtime
   //Dependency_AddDirectX;
   // Not required any longer following the removal of CEGUI
-  
+
   // 32-bit Visual C++ 2015-2022 Redistributable
   try
     Log('+ 32-bit Visual C++ 2015-2022 Redistributable');
     Dependency_ForceX86 := True;
     Dependency_AddVC2015To2022;
     Dependency_ForceX86 := False;
-  except 
+  except
     Log('Catastrophic error in InitializeSetup() for 32-bit Visual C++ 2015-2022 Redistributable!');
     // Surpresses exception when an issue prevents proper lookup
   end;
-      
+
   // 64-bit Visual C++ 2015-2022 Redistributable
   if IsWin64 then
   begin
     try
       Log('+ 64-bit Visual C++ 2015-2022 Redistributable');
       Dependency_AddVC2015To2022;
-    except 
+    except
       Log('Catastrophic error in InitializeSetup() for 64-bit Visual C++ 2015-2022 Redistributable!');
       // Surpresses exception when an issue prevents proper lookup
     end;
   end;
 
   Result := True;
-end;  
+end;
 
 
 procedure InitializeWizard();
-begin 
+begin
   Log('Initializing Wizard.');
 
   if not WizardSilent() then
-  begin 
+  begin
     FixInnoSetupTaskbarPreview();
 
     // Have the disk spacel label appear here instead of later
     WizardForm.DiskSpaceLabel.Parent  := PageFromID(wpWelcome).Surface;
     // Hide the disk spacel label
     WizardForm.DiskSpaceLabel.Visible := False;
+
+    InitializePatreonButton();
   end;
 end;
 
 
 procedure DeinitializeSetup();
 begin
-  
+
 end;
 
 
@@ -156,7 +157,7 @@ var
   AdditionalTasks : String;
 begin
   if CurPageID = wpReady then
-  begin 
+  begin
     Log('Initializing Ready Page.');
 
     Wizardform.ReadyMemo.Font.Name := 'Consolas';
@@ -184,7 +185,7 @@ begin
     //end;
 
     // And finally if there is any additional tasks from Inno Setup or CodeDependencies.iss, add them back.
-    Wizardform.ReadyMemo.Lines.Add(AdditionalTasks); 
+    Wizardform.ReadyMemo.Lines.Add(AdditionalTasks);
 
     Wizardform.ReadyMemo.Show;
   end;
@@ -195,12 +196,12 @@ function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   WasVisible       : Boolean;
 
-begin 
+begin
   Log('Preparing Install.');
 
   WasVisible   := WizardForm.PreparingLabel.Visible;
   Result       := '';
-  
+
   // Do custom install stuff here...
 
 end;
@@ -209,14 +210,14 @@ end;
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
     DefaultCaption   : String;
-    
+
 begin
   if CurUninstallStep = usUninstall then
-  begin 
+  begin
     Log('Preparing Uninstall.');
 
     DefaultCaption := UninstallProgressForm.StatusLabel.Caption;
-    
+
     // Do custom uninstall stuff here...
 
     UninstallProgressForm.StatusLabel.Caption := DefaultCaption;
@@ -256,7 +257,7 @@ Source: "{#SourceDir}\SpecialK32.pdb";               DestDir: "{app}";          
 
 ; Remaining files should only be created if they do not exist already.
 ; NOTE: This line causes the files included above to be counted twice in DiskSpaceMBLabel
-Source: "{#SourceDir}\*";                            DestDir: "{app}";          Flags: onlyifdoesntexist recursesubdirs createallsubdirs;  Excludes: "SKIV.exe,SKIV32.exe,\SpecialK32.dll,\SpecialK32.pdb,\SpecialK64.dll,\SpecialK64.pdb" 
+Source: "{#SourceDir}\*";                            DestDir: "{app}";          Flags: onlyifdoesntexist recursesubdirs createallsubdirs;  Excludes: "SKIV.exe,SKIV32.exe,\SpecialK32.dll,\SpecialK32.pdb,\SpecialK64.dll,\SpecialK64.pdb"
 
 
 [Dirs]
