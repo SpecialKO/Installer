@@ -10,13 +10,13 @@
 
 
 ; Tales of Berseria
-#define TBFix
+;#define TBFix
 
-; Tales of Vesperia
+; Tales of Vesperia (no longer necessary!)
 ;#define TVFix
 
 ; Final Fantasy X|X-2 HD Remaster
-;#define UnX
+#define UnX
 
 #define SpecialKName          "Special K"
 #define SpecialKPublisher     "The Special K Group"
