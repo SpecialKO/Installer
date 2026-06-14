@@ -44,8 +44,11 @@ var
   MusicAvailable    : Boolean;
   LocPLUGroupName   : String;
   LocINTUserName    : String;
+  CustomButtons     : array of TNewButton;
+  PatreonButton     : TNewButton;
   ToggleMusicButton : TNewButton;
   CreditMusicButton : TNewButton;
+  CreditMusicURL    : String;
   OneDriveStopped   : Boolean;
   OneDrivePath      : String;
   SteamStopped      : Boolean;
@@ -63,7 +66,7 @@ var
   function GetWindowLong    (hWnd: HWND;  nIndex: Integer)                     : Longint;  external 'GetWindowLongW@user32.dll stdcall delayload';
 //function SetWindowLongPtr (hWnd: HWND;  nIndex: Integer;  dwNewLong: Longint): Longint;  external 'SetWindowLongPtrW@user32.dll stdcall delayload';
 //function GetWindowLongPtr (hWnd: HWND;  nIndex: Integer)                     : Longint;  external 'GetWindowLongPtrW@user32.dll stdcall delayload';
- 
+
 
 // Used to play background music during installation
 // - Not critical, so use delayload
@@ -82,14 +85,14 @@ function mciSendString (lpstrCommand: String; lpstrReturnString: Integer; uRetur
 function FixInnoSetupTaskbarPreview: Boolean;
 begin
   if not WizardSilent() then
-  begin  
+  begin
 
     // We are delay loading all of these required DLL functions, so need additional exception handling
     try
       Log('Fixing the no taskbar preview bug of Inno Setup.');
-      SetWindowLong(WizardForm.Handle, -8, GetWindowLong(GetWindow(WizardForm.Handle, 4), -8));      
+      SetWindowLong(WizardForm.Handle, -8, GetWindowLong(GetWindow(WizardForm.Handle, 4), -8));
       Result := True;
-    except 
+    except
       Log('Catastrophic error in FixInnoSetupTaskbarPreview() !');
       // Surpresses exception when an issue prevents proper lookup
     end;
@@ -146,10 +149,10 @@ begin
       end;
 
       if not VarIsEmpty(WbemLocator) and not VarIsEmpty(WbemServices) then
-      begin       
+      begin
         Result := True;
       end;
-    except 
+    except
       Log('Catastrophic error in InitializeWMI() !');
       // Surpresses exception when an issue prevents proper lookup
     end;
@@ -162,11 +165,97 @@ end;
 
 
 // -----------
+// Custom button helpers
+// -----------
+
+function CustomButtonsLength(): Integer;
+begin
+  Result := GetArrayLength(CustomButtons);
+end;
+
+function RegisterCustomButton(Button: TNewButton): Boolean;
+begin
+  SetArrayLength(CustomButtons, CustomButtonsLength() + 1);
+  CustomButtons[CustomButtonsLength() - 1] := Button;
+
+  Result := True
+end;
+
+function GetLastCustomButton(): TNewButton;
+begin
+  if CustomButtonsLength() > 0 then
+  begin
+    Result := CustomButtons[CustomButtonsLength - 1];
+  end;
+end;
+
+function GetNextCustomButtonLeft(Related: Boolean): Integer;
+begin
+
+  if Assigned(GetLastCustomButton()) then
+  begin
+    Result :=
+      GetLastCustomButton().Left +
+      GetLastCustomButton().Width;
+
+    if Related then
+    begin
+      Result := Result +  2; // Spacing between   related items (e.g. Back/Next)   seems to be  2px
+    end
+    else
+    begin
+      Result := Result + 10; // Spacing between unrelated items (e.g. Next/Cancel) seems to be 10px
+    end;
+  end
+  else
+  begin
+    Result :=
+      WizardForm.ClientWidth -
+      WizardForm.CancelButton.Left -
+      WizardForm.CancelButton.Width;
+  end;
+end;
+
+
+// -----------
+// Patreon button
+// -----------
+
+procedure PatreonButtonClick(Sender: TObject);
+var
+  ErrorCode: Integer;
+begin
+  ShellExec('', 'https://www.patreon.com/Kaldaien', '', '', SW_SHOW, ewNoWait, ErrorCode);
+end;
+
+function InitializePatreonButton(): Boolean;
+begin
+  if not WizardSilent() then
+  begin
+    // Create the UI elements
+    PatreonButton         := TNewButton.Create(WizardForm);
+    PatreonButton.Parent  := WizardForm;
+    PatreonButton.Left    := GetNextCustomButtonLeft(False);
+    PatreonButton.Top     := WizardForm.CancelButton.Top;
+    PatreonButton.Width   := WizardForm.CancelButton.Width;
+    PatreonButton.Height  := WizardForm.CancelButton.Height;
+    PatreonButton.Caption := 'Patreon';
+    PatreonButton.OnClick := @PatreonButtonClick;
+    PatreonButton.Anchors := [akLeft, akBottom];
+
+    RegisterCustomButton(PatreonButton);
+
+    Result := True
+  end;
+end;
+
+
+// -----------
 // Music playback
 // -----------
 
 // This is called by the OnClick handler of a button
-procedure ToggleButtonClick(Sender: TObject);
+procedure ToggleMusicButtonClick(Sender: TObject);
 begin
   if MusicAvailable then
   begin
@@ -190,10 +279,10 @@ procedure CreditButtonClick(Sender: TObject);
 var
   ErrorCode: Integer;
 begin
-  ShellExec('', 'https://opengameart.org/content/stargazer', '', '', SW_SHOW, ewNoWait, ErrorCode);
+  ShellExec('', CreditMusicURL, '', '', SW_SHOW, ewNoWait, ErrorCode);
 end;
 
-function InitializeMusicPlayback(FileName: String): Boolean;
+function InitializeMusicPlayback(FileName: String; Link: String; ShowCreditButton: Boolean): Boolean;
 begin
   if not WizardSilent() then
   begin
@@ -215,29 +304,31 @@ begin
           // Create the UI elements
           ToggleMusicButton         := TNewButton.Create(WizardForm);
           ToggleMusicButton.Parent  := WizardForm;
-          ToggleMusicButton.Left    :=
-            WizardForm.ClientWidth -
-            WizardForm.CancelButton.Left - 
-            WizardForm.CancelButton.Width;
-          ToggleMusicButton.Top     := WizardForm.CancelButton.Top; //WizardForm.CancelButton.Top + 50;
+          ToggleMusicButton.Left    := GetNextCustomButtonLeft(False);
+          ToggleMusicButton.Top     := WizardForm.CancelButton.Top;
           ToggleMusicButton.Width   := WizardForm.CancelButton.Width;
           ToggleMusicButton.Height  := WizardForm.CancelButton.Height;
           ToggleMusicButton.Caption := 'Play Music';
-          ToggleMusicButton.OnClick := @ToggleButtonClick;
+          ToggleMusicButton.OnClick := @ToggleMusicButtonClick;
           ToggleMusicButton.Anchors := [akLeft, akBottom];
 
-          CreditMusicButton         := TNewButton.Create(WizardForm);
-          CreditMusicButton.Parent  := WizardForm;
-          CreditMusicButton.Left    :=
-            WizardForm.ClientWidth -
-            WizardForm.NextButton.Left -
-            WizardForm.NextButton.Width;
-          CreditMusicButton.Top     := WizardForm.NextButton.Top; //WizardForm.CancelButton.Top + 50;
-          CreditMusicButton.Width   := WizardForm.NextButton.Width;
-          CreditMusicButton.Height  := WizardForm.NextButton.Height;
-          CreditMusicButton.Caption := 'Music By';
-          CreditMusicButton.OnClick := @CreditButtonClick;
-          CreditMusicButton.Anchors := [akLeft, akBottom];
+          RegisterCustomButton(ToggleMusicButton);
+
+          if ShowCreditButton then
+          begin
+            CreditMusicURL            := Link;
+            CreditMusicButton         := TNewButton.Create(WizardForm);
+            CreditMusicButton.Parent  := WizardForm;
+            CreditMusicButton.Left    := GetNextCustomButtonLeft(True);
+            CreditMusicButton.Top     := ToggleMusicButton.Top;
+            CreditMusicButton.Width   := ToggleMusicButton.Width;
+            CreditMusicButton.Height  := ToggleMusicButton.Height;
+            CreditMusicButton.Caption := 'Music By';
+            CreditMusicButton.OnClick := @CreditButtonClick;
+            CreditMusicButton.Anchors := [akLeft, akBottom];
+
+            RegisterCustomButton(CreditMusicButton);
+          end;
 
           // If everything worked so far
           MusicAvailable := True;
@@ -253,7 +344,7 @@ end;
 function DeinitializeMusicPlayback: Boolean;
 begin
   if not WizardSilent() and MusicAvailable then
-  begin 
+  begin
     Log('Cleaning up music components.');
     try
       if MusicPlayback then
@@ -432,14 +523,14 @@ begin
         end;
       end;
     end
-  end; 
+  end;
 end;
 
 // Checks if Steam is currently running
 function IsSteamRunning(): Boolean;
 var
   WbemObjectSet : Variant;
-  
+
 begin
   try
     if InitializeWMI() then
@@ -447,12 +538,12 @@ begin
       WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "Steam.exe")');
 
       if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
-      begin      
+      begin
         Result := True;
       end;
     end;
 
-  except 
+  except
     Log('Catastrophic error in IsSteamRunning()!');
     // Surpresses exception when an issue prevents proper lookup
   end;
@@ -489,7 +580,7 @@ end;
 // This is a helper function to convert from Unicode string to Ansi string as
 // byte array comparisons with data read using TFileStream otherwise break
 // See https://stackoverflow.com/a/43161113/15133327 for more information
-// 
+//
 // From StackOverflow: https://stackoverflow.com/q/31228103/15133327
 // Created by: https://stackoverflow.com/users/3992415/leduc
 // Licensed under CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/
@@ -626,7 +717,7 @@ var
   WbemObjectSet : Variant;
   IsMember      : Boolean;
   ComputerName  : String;
-  I             : Integer;      
+  I             : Integer;
 begin
   try
     (*
@@ -649,14 +740,14 @@ begin
     begin
       Log('Attempting to retrieve PLU membership...');
 
-      // Retrieve the localized name of the PLU group  
+      // Retrieve the localized name of the PLU group
       WbemObjectSet      := WbemServices.ExecQuery('SELECT * FROM Win32_Group WHERE (LocalAccount = True) AND (SID = "S-1-5-32-559")');
 
       if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
       begin
         ComputerName    := WbemObjectSet.ItemIndex(0).Domain;
         LocPLUGroupName := WbemObjectSet.ItemIndex(0).Name;
-        
+
         //MsgBox(ComputerName,    mbInformation, MB_OK);
         //MsgBox(LocPLUGroupName, mbInformation, MB_OK);
 
@@ -670,7 +761,7 @@ begin
           begin
             for I := 0 to WbemObjectSet.Count - 1 do
             begin
-              // Check if one of the members is NT AUTHORITY\Interactive 
+              // Check if one of the members is NT AUTHORITY\Interactive
               if (WbemObjectSet.ItemIndex(I).SID = 'S-1-5-4') then
               begin
                 IsMember := True;
@@ -684,7 +775,7 @@ begin
         begin
           Log('Attempting to retrieve localized username for NT AUTHORITY\Interactive...');
           WbemObjectSet := Null;
-            
+
           WbemObjectSet      := WbemServices.ExecQuery('SELECT * FROM Win32_SystemAccount WHERE (LocalAccount = True) AND (SID = "S-1-5-4")');
           if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
           begin
@@ -697,7 +788,7 @@ begin
 
     end;
 
-  except 
+  except
     Log('Catastrophic error in IsInteractiveInPLU() !');
     // Surpresses exception when an issue prevents proper lookup
   end;
@@ -726,7 +817,7 @@ begin
     Log(Format('Failed to locate Special K folder, using fallback: %s', [SKInstallPath]));
   end;
 
-  Result := SKInstallPath; 
+  Result := SKInstallPath;
 end;
 
 // Checks if the injector service of Special K or SKIF is running
@@ -734,14 +825,14 @@ function IsSKIForSvcRunning(): Boolean;
 var
   WbemObjectSet : Variant;
   InstallFolder : String;
-    
+
 begin
   InstallFolder := ExtractFileName(RemoveBackslashUnlessRoot(ExpandConstant('{app}')));
 
   if Length(InstallFolder) = 0 then
   begin
     InstallFolder := 'SpecialK';
-  end; 
+  end;
 
   try
 
@@ -750,12 +841,12 @@ begin
       WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIFsvc.exe" OR Name = "SKIFsvc32.exe" OR Name = "SKIFsvc64.exe" OR Name = "SKIF.exe") OR ((Name = "rundll32.exe") AND (CommandLine LIKE "%SpecialK%" OR CommandLine LIKE "%Special K%" OR CommandLine LIKE "%' + InstallFolder + '%" OR ExecutablePath LIKE "%SpecialK%" OR ExecutablePath LIKE "%Special K%" OR ExecutablePath LIKE "%' + InstallFolder + '%"))');
 
       if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
-      begin      
+      begin
         Result := True;
       end;
     end;
 
-  except 
+  except
     Log('Catastrophic error in IsSKIForSvcRunning()!');
     // Surpresses exception when an issue prevents proper lookup
   end;
@@ -765,7 +856,7 @@ end;
 function IsSKIFRunning(): Boolean;
 var
   WbemObjectSet : Variant;
-    
+
 begin
   try
     if InitializeWMI() then
@@ -773,12 +864,12 @@ begin
       WbemObjectSet := WbemServices.ExecQuery('SELECT Name FROM Win32_Process WHERE (Name = "SKIF.exe")');
 
       if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
-      begin      
+      begin
         Result := True;
       end;
     end;
 
-  except 
+  except
     Log('Catastrophic error in IsSKIFRunning()!');
     // Surpresses exception when an issue prevents proper lookup
   end;
@@ -793,7 +884,7 @@ begin
     // Not safe to do as it seems to get the service stuck in an unstartable state
     //Exec('taskkill.exe', '/F /IM SKIFsvc32.exe', '', SW_HIDE, ewNoWait, Result);
     //Exec('taskkill.exe', '/F /IM SKIFsvc64.exe', '', SW_HIDE, ewNoWait, Result);
-  except 
+  except
     Log('Catastrophic error in ForceStopSKIFandSvc()!');
     // Surpresses exception when an issue prevents proper lookup
   end;
@@ -822,11 +913,11 @@ begin
           if not VarIsNull(TaskCollection.Item(I)) and (TaskCollection.Item(I).Name = 'SK_InjectLogon') then
           begin
             Result := True;
-          end; 
+          end;
         end;
       end;
     end;
-  except 
+  except
     Log('Catastrophic error in IsSKIFAutoStartEnabled() !');
     // Surpresses exception when task does not exist or another issue prevents proper lookup
   end;
@@ -842,7 +933,7 @@ function IsOneDriveRunning(): Boolean;
 var
   WbemObjectSet : Variant;
   Path : String;
-    
+
 begin
   try
     if InitializeWMI() then
@@ -859,7 +950,7 @@ begin
         end;
       end;
     end;
-  except 
+  except
     Log('Catastrophic error in IsOneDriveRunning()!');
     // Surpresses exception when an issue prevents proper lookup
   end;
@@ -871,7 +962,7 @@ begin
   try
     Exec('taskkill.exe', '/F /IM OneDrive.exe', '', SW_HIDE, ewNoWait, Result);
     OneDriveStopped := True;
-  except 
+  except
     Log('Catastrophic error in StopOneDrive()!');
     // Surpresses exception when an issue prevents proper lookup
   end;
@@ -899,7 +990,7 @@ function IsKernelDriverInstalled(): Boolean;
 var
   WbemObjectSet : Variant;
   //InstallFolder : String;
-    
+
 begin
   //InstallFolder := ExtractFileName(RemoveBackslashUnlessRoot(ExpandConstant('{app}')));
 
@@ -914,12 +1005,12 @@ begin
       WbemObjectSet := WbemServices.ExecQuery('SELECT PathName FROM Win32_SystemDriver WHERE Name = "SK_WinRing0"'); //  AND (PathName LIKE "%SpecialK%" OR PathName LIKE "%Special K%" OR PathName LIKE "%' + InstallFolder + '%")
 
       if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
-      begin       
+      begin
         Result := True;
       end;
     end;
 
-  except 
+  except
     Log('Catastrophic error in IsKernelDriverInstalled() !');
     // Surpresses exception when an issue prevents proper lookup
   end;
@@ -955,7 +1046,7 @@ const
   SHCONTCH_NOPROGRESSBOX = 4;
   SHCONTCH_RESPONDYESTOALL = 16;
 
-procedure UnZip(ZipPath, TargetPath: string); 
+procedure UnZip(ZipPath, TargetPath: string);
 var
   Shell: Variant;
   ZipFile: Variant;
@@ -990,7 +1081,7 @@ begin
 
   Log(Format('EnableControlledFolderAccess: %s', [CFAEnabled]));
 
-  Result := (CompareText(CFAEnabled, '1') = 0); 
+  Result := (CompareText(CFAEnabled, '1') = 0);
 end;
 
 
