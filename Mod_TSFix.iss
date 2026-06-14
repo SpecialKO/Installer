@@ -46,9 +46,9 @@
   #define Link_dlc_cleanup_4k_upscale  "https://sk-data.special-k.info/TSFix/99_Upscale4x.7z"
 #endif
 
-#define SpecialKFileName  StringChange("SpecialK " + SpecialKModName + " " + SpecialKVersion, " ", "_")
-#define MusicFileName     "techno_stargazev2.1loop.mp3"
-#define MusicCreditURL    "https://opengameart.org/content/stargazer"
+#define SpecialKFileName      StringChange("SpecialK " + SpecialKModName + " " + SpecialKVersion, " ", "_")
+#define MusicFileName         "techno_stargazev2.1loop.mp3"
+#define MusicCreditURL        "https://opengameart.org/content/stargazer"
 
 #include "SpecialK_Shared.iss"
 
