@@ -9,9 +9,6 @@
 ; https://github.com/SpecialKO/Installer/blob/main/LICENSE
 
 
-; NieR: Replicant **DO NOT USE**
-;#define Replicant
-
 ; Tales of Berseria
 #define TBFix
 
@@ -31,19 +28,7 @@
 #define OutputDir             "Builds_Mods"                   ; Output folder to put compiled builds of the installer
 #define AssetsDir             "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
 
-#if Defined Replicant ; NieR: Replicant
-  #define SourceDir           "Source_Replicant"
-  #define SteamAppID          "1113560"
-  #define SpecialKModUninstID "{F11AD53F-5B59-48F6-A550-64E554497FFE}"
-  #define SpecialKGameName    "NieR: Replicant"
-  #define SpecialKModName     "Radical Replicant"
-  #define SpecialKVersion     GetStringFileInfo(SourceDir + '\dxgi.dll', "ProductVersion")
-  #define SpecialKHelpURL     "https://wiki.special-k.info/SpecialK/Custom/Replicant"
-  #define BackupFile          "NieR Replicant ver.1.22474487139.exe"
-  #define DownloadURL         "https://sk-data.special-k.info/misc/nier_replicant_1.0.exe"
-  #define DownloadFileName    "NieR Replicant ver.1.22474487139.exe"
-
-#elif Defined TBFix ; Tales of Berseria
+#if Defined TBFix ; Tales of Berseria
   #define SourceDir           "Source_TBFix"
   #define SteamAppID          "429660"
   #define SpecialKModUninstID "{EBE9243D-5ADC-48F2-9716-65F75A4EE203}"
@@ -453,9 +438,7 @@ Source: "{tmp}\{#BackupFile}";                       DestDir: "{app}";          
 
 
 [Tasks]
-#if Defined Replicant
-Name: downgrade;   Description: "Downgrade game (required for >60 FPS)";                Flags: unchecked;
-#elif Defined TVFix
+#if Defined TVFix
 Name: downgrade;   Description: "Downgrade game (required to access full feature set)";
 #endif
 
