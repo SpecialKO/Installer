@@ -15,8 +15,8 @@
 #define SpecialKForum     "https://discourse.special-k.info/"
 #define SpecialKDiscord   "https://discord.special-k.info"
 #define SpecialKPatreon   "https://www.patreon.com/Kaldaien"
-#define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts   
-#define OutputDir         "Builds_SKIFdrv"                ; Output folder to put compiled builds of the installer   
+#define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts
+#define OutputDir         "Builds_SKIFdrv"                ; Output folder to put compiled builds of the installer
 #define AssetsDir         "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
 
 #define SourceDir         "Source_SKIFdrv"
@@ -38,12 +38,12 @@ ArchitecturesAllowed               = x64
 MinVersion                         = 6.3.9600
 AppId                              = {{#SKIFdrvUninstID}
 AppName                            = {#SpecialKName}
-AppVersion                         = {#SpecialKVersion}  
+AppVersion                         = {#SpecialKVersion}
 AppVerName                         = {#SpecialKName}
 AppPublisher                       = {#SpecialKPublisher}
 AppPublisherURL                    = {#SpecialKURL}
 AppSupportURL                      = {#SpecialKHelpURL}
-AppUpdatesURL                      = 
+AppUpdatesURL                      =
 AppCopyright                       = Copyleft 🄯 2015-2023
 VersionInfoVersion                 = {#SpecialKVersion}
 VersionInfoOriginalFileName        = {#SpecialKFileName}.exe
@@ -57,7 +57,7 @@ DisableProgramGroupPage            = yes
 InfoBeforeFile                     = {#AssetsDir}\SKIFdrv_InfoBefore.rtf
 LicenseFile                        = {#AssetsDir}\LICENSE.txt
 PrivilegesRequired                 = admin
-PrivilegesRequiredOverridesAllowed = 
+PrivilegesRequiredOverridesAllowed =
 OutputDir                          = {#OutputDir}
 OutputBaseFilename                 = {#SpecialKFileName}
 SetupIconFile                      = {#AssetsDir}\icon.ico
@@ -95,40 +95,40 @@ begin
   Log('Initializing Setup.');
 
   Log('Required dependencies:');
-  
+
   // 32-bit Visual C++ 2015-2022 Redistributable
   try
     Log('+ 32-bit Visual C++ 2015-2022 Redistributable');
     Dependency_ForceX86 := True;
     Dependency_AddVC2015To2022;
     Dependency_ForceX86 := False;
-  except 
+  except
     Log('Catastrophic error in InitializeSetup() for 32-bit Visual C++ 2015-2022 Redistributable!');
     // Surpresses exception when an issue prevents proper lookup
   end;
-      
+
   // 64-bit Visual C++ 2015-2022 Redistributable
   if IsWin64 then
   begin
     try
       Log('+ 64-bit Visual C++ 2015-2022 Redistributable');
       Dependency_AddVC2015To2022;
-    except 
+    except
       Log('Catastrophic error in InitializeSetup() for 64-bit Visual C++ 2015-2022 Redistributable!');
       // Surpresses exception when an issue prevents proper lookup
     end;
   end;
 
   Result := True;
-end;  
+end;
 
 
 procedure InitializeWizard();
-begin 
+begin
   Log('Initializing Wizard.');
 
   if not WizardSilent() then
-  begin 
+  begin
     FixInnoSetupTaskbarPreview();
 
     // Have the disk spacel label appear here instead of later
@@ -142,7 +142,7 @@ var
   AdditionalTasks : String;
 begin
   if CurPageID = wpReady then
-  begin 
+  begin
     Log('Initializing Ready Page.');
 
     Wizardform.ReadyMemo.Font.Name := 'Consolas';
@@ -159,7 +159,7 @@ begin
     Wizardform.ReadyMemo.Lines.Add('');
 
     // And finally if there is any additional tasks from Inno Setup or CodeDependencies.iss, add them back.
-    Wizardform.ReadyMemo.Lines.Add(AdditionalTasks); 
+    Wizardform.ReadyMemo.Lines.Add(AdditionalTasks);
 
     Wizardform.ReadyMemo.Show;
   end;
@@ -195,7 +195,7 @@ Filename: "{app}\SKIFdrv.exe";   Parameters: "Uninstall Silent";   WorkingDir: "
   Flags: shellexec waituntilterminated; RunOnceId: "DeleteDrvService"
 
 
-[UninstallDelete]                              
+[UninstallDelete]
 ; WinRing0.sys is the 32-bit driver of WinRing0, but it's not actually used or supported.
 ; WinRing0.dll is the only thing required to allow 32-bit applications to use the 64-bit driver.
 Type: files;          Name: "{app}\WinRing0.sys"
