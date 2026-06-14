@@ -16,14 +16,15 @@
 #define SpecialKForum     "https://discourse.special-k.info/"
 #define SpecialKDiscord   "https://discord.special-k.info"
 #define SpecialKPatreon   "https://www.patreon.com/Kaldaien"
-#define SpecialKExeName   "SKIF.exe"                                                                                 
+#define SpecialKExeName   "SKIF.exe"
 #define SourceDir         "Source"                        ; Keeps the files and folder structure of the install folder as intended post-install
-#define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts   
-#define OutputDir         "Builds"                        ; Output folder to put compiled builds of the installer   
+#define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts
+#define OutputDir         "Builds"                        ; Output folder to put compiled builds of the installer
 #define AssetsDir         "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
 #define SpecialKVersion   GetStringFileInfo(SourceDir + '\SpecialK64.dll', "ProductVersion") ; ProductVersion
 #define SKIFVersion       GetStringFileInfo(SourceDir + '\SKIF.exe',       "ProductVersion")
 #define MusicFileName     "techno_stargazev2.1loop.mp3"
+#define MusicCreditURL    "https://opengameart.org/content/stargazer"
 
 #include "SpecialK_Shared.iss"
 
@@ -42,12 +43,12 @@ ArchitecturesAllowed               = x86compatible x64compatible
 MinVersion                         = 6.1sp1
 AppId                              = {{#SpecialKUninstID}
 AppName                            = {#SpecialKName}
-AppVersion                         = {#SpecialKVersion}  
+AppVersion                         = {#SpecialKVersion}
 AppVerName                         = {#SpecialKName}
 AppPublisher                       = {#SpecialKPublisher}
 AppPublisherURL                    = {#SpecialKURL}
 AppSupportURL                      = {#SpecialKHelpURL}
-AppUpdatesURL                      = 
+AppUpdatesURL                      =
 AppCopyright                       = Copyleft 🄯 2015-2026
 VersionInfoVersion                 = {#SpecialKVersion}
 VersionInfoOriginalFileName        = SpecialK_{#SpecialKVersion}.exe
@@ -67,6 +68,7 @@ SetupIconFile                      = {#AssetsDir}\icon.ico
 Compression                        = lzma2/ultra64
 SolidCompression                   = yes
 LZMAUseSeparateProcess             = yes
+;WizardSizePercent                 = 120,120
 WizardStyle                        = modern dynamic windows11 hidebevels includetitlebar
 WizardImageFile                    = {#AssetsDir}\WizardImageFileZoom.bmp
 WizardImageFileDynamicDark         = {#AssetsDir}\WizardImageFileZoom.bmp
@@ -89,7 +91,7 @@ SetupAppTitle    ={#SpecialKName} Setup
 SetupWindowTitle ={#SpecialKName} v {#SpecialKVersion}
 UninstallAppTitle={#SpecialKName} Uninstall
 WelcomeLabel2    =This will install {#SpecialKName} v {#SpecialKVersion} on your computer.%n%nLovingly referred to as the Swiss Army Knife of PC gaming, Special K does a bit of everything. It is best known for fixing and enhancing graphics, its many detailed performance analysis and correction mods, and a constantly growing palette of tools that solve a wide variety of issues affecting PC games.%n%nIt is recommended that you close all other applications before continuing.
-ConfirmUninstall =Are you sure you want to completely remove %1 and all of its components?%n%nThis will also remove any Special K game data (screenshots, texture packs, configs) stored in the Profiles subfolder.  
+ConfirmUninstall =Are you sure you want to completely remove %1 and all of its components?%n%nThis will also remove any Special K game data (screenshots, texture packs, configs) stored in the Profiles subfolder.
 DiskSpaceMBLabel =
 
 
@@ -106,48 +108,49 @@ begin
   // DirectX End-User Runtime
   //Dependency_AddDirectX;
   // Not required any longer following the removal of CEGUI
-  
+
   // 32-bit Visual C++ 2015-2022 Redistributable
   try
     Log('+ 32-bit Visual C++ 2015-2022 Redistributable');
     Dependency_ForceX86 := True;
     Dependency_AddVC2015To2022;
     Dependency_ForceX86 := False;
-  except 
+  except
     Log('Catastrophic error in InitializeSetup() for 32-bit Visual C++ 2015-2022 Redistributable!');
     // Surpresses exception when an issue prevents proper lookup
   end;
-      
+
   // 64-bit Visual C++ 2015-2022 Redistributable
   if IsWin64 then
   begin
     try
       Log('+ 64-bit Visual C++ 2015-2022 Redistributable');
       Dependency_AddVC2015To2022;
-    except 
+    except
       Log('Catastrophic error in InitializeSetup() for 64-bit Visual C++ 2015-2022 Redistributable!');
       // Surpresses exception when an issue prevents proper lookup
     end;
   end;
 
   Result := True;
-end;  
+end;
 
 
 procedure InitializeWizard();
-begin 
+begin
   Log('Initializing Wizard.');
 
   if not WizardSilent() then
-  begin 
+  begin
     FixInnoSetupTaskbarPreview();
 
     // Have the disk spacel label appear here instead of later
     WizardForm.DiskSpaceLabel.Parent  := PageFromID(wpWelcome).Surface;
     // Hide the disk spacel label
     WizardForm.DiskSpaceLabel.Visible := False;
-     
-    InitializeMusicPlayback('{#MusicFileName}');
+
+    InitializePatreonButton();
+    InitializeMusicPlayback('{#MusicFileName}', '{#MusicCreditURL}', False);
   end;
 end;
 
@@ -163,7 +166,7 @@ var
   AdditionalTasks : String;
 begin
   if CurPageID = wpReady then
-  begin 
+  begin
     Log('Initializing Ready Page.');
 
     Wizardform.ReadyMemo.Font.Name := 'Consolas';
@@ -192,7 +195,7 @@ begin
     //end;
 
     // And finally if there is any additional tasks from Inno Setup or CodeDependencies.iss, add them back.
-    Wizardform.ReadyMemo.Lines.Add(AdditionalTasks); 
+    Wizardform.ReadyMemo.Lines.Add(AdditionalTasks);
 
     Wizardform.ReadyMemo.Show;
   end;
@@ -209,7 +212,7 @@ var
   AppInitDLLs64Pos : Integer;
   OldDLLsEnding    : String;
 
-begin 
+begin
   Log('Preparing Install.');
 
   WasVisible   := WizardForm.PreparingLabel.Visible;
@@ -224,17 +227,17 @@ begin
     Wizardform.BackButton.Visible := False;
     Wizardform.BackButton.Enabled := False;
 
-    // Determine if OneDrive is running and if so prompt user about closing it 
+    // Determine if OneDrive is running and if so prompt user about closing it
     Log('Checking if OneDrive is used for the Documents folder...');
 
     if (Pos('OneDrive', ExpandConstant('{app}')) > 0) and (IsOneDriveRunning()) then
-    begin 
-      Log('Prompting the user about OneDrive...'); 
+    begin
+      Log('Prompting the user about OneDrive...');
       WizardForm.PreparingLabel.Caption := 'Prompting user about OneDrive...';
 
       // If installer is running silently, assume Yes
       if WizardSilent() then
-      begin 
+      begin
         Log('Silent install detected, assuming YES.');
         StopOneDrive();
       end
@@ -265,7 +268,7 @@ begin
           WizardForm.PreparingLabel.Caption := 'Attempting to grant membership in the local ''Performance Log Users'' group...';
 
           // We need to use 'net' here regardless of Windows version due to Inno Setup bitness/file system redirection limitations
-          // Specifically that {sysnative} or C:\Windows\sysnative\ or %windir%\sysnative is not usable with ShellExec 
+          // Specifically that {sysnative} or C:\Windows\sysnative\ or %windir%\sysnative is not usable with ShellExec
           Log('Launching ''net'' elevated to add user (' + LocINTUserName + ') to the group (' + LocPLUGroupName + ').');
           ShellExec('RunAs', ExpandConstant('{sys}\net.exe'), 'localgroup "' + LocPLUGroupName + '" "' + LocINTUserName + '" /add', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
 
@@ -274,7 +277,7 @@ begin
           if ResultCode <> 0 then
           begin
             Log('Failed to grant permission : ' + IntToStr(ResultCode) + ', ' + SysErrorMessage(ResultCode));
-          end;      
+          end;
         end;
 
         ResultCode   := 0;
@@ -295,7 +298,7 @@ begin
         end;
         AppInitDLLs32Pos := Pos('SpecialK', AppInitDLLs32);
         AppInitDLLs64Pos := Pos('SpecialK', AppInitDLLs64);
-        
+
         if (AppInitDLLs32Pos > 0) or (AppInitDLLs64Pos > 0) then
         begin
           WizardForm.PreparingLabel.Caption := 'Running cleanup commands in an elevated process...';
@@ -303,9 +306,9 @@ begin
           Log('AppInitDLLs 64-bit : ' + AppInitDLLs64);
 
           ExtractTemporaryFile('Unregister-AppInitDLLs.ps1');
-                 
+
           Log('Calling an elevated Powershell session to run Unregister-AppInitDLLs.ps1');
-          ShellExec('RunAs', ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), ExpandConstant('-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "{tmp}\Unregister-AppInitDLLs.ps1"'), '', SW_SHOW, ewWaitUntilTerminated, ResultCode);      
+          ShellExec('RunAs', ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), ExpandConstant('-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "{tmp}\Unregister-AppInitDLLs.ps1"'), '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
 
           Sleep(500);
 
@@ -317,11 +320,11 @@ begin
 
         ResultCode   := 0;
       end;
-      
+
       // If the service or SKIF is running, attempt to stop them gracefully
       if (IsSKIForSvcRunning()) and (FileExists(ExpandConstant('{app}\SKIF.exe'))) then
       begin
-        Log('SKIF.exe file check : detected'); 
+        Log('SKIF.exe file check : detected');
         Log('Stopping Special K Injection Frontend (SKIF) and the injection service...');
         WizardForm.PreparingLabel.Caption := 'Stopping Special K Injection Frontend (SKIF) and the injection service...';
 
@@ -337,10 +340,10 @@ begin
         Sleep(500);
       end;
 
-      
+
       // If any component is still running, forcefully close them
       if (IsSKIForSvcRunning()) then
-      begin 
+      begin
         Log('Forcefully stopping Special K Injection Frontend (SKIF).');
         WizardForm.PreparingLabel.Caption := 'Forcefully stopping Special K Injection Frontend (SKIF)...';
 
@@ -372,10 +375,10 @@ begin
           RenameFile(ExpandConstant('{app}\SpecialK64.dll'), ExpandConstant('{app}\SpecialK64') + OldDLLsEnding);
         end;
       end;
-    
+
     end;
-  
-  except 
+
+  except
     Log('Catastrophic error in PrepareToInstall()!');
     // Surpresses exception when task does not exist or another issue prevents proper lookup
   finally
@@ -395,15 +398,15 @@ var
     DriverUninstStr  : String;
 begin
   if CurUninstallStep = usUninstall then
-  begin 
+  begin
     Log('Preparing Uninstall.');
 
     DefaultCaption := UninstallProgressForm.StatusLabel.Caption;
     InstallFolder := ExpandConstant('{app}');
 
     if (IsSKIForSvcRunning()) and (FileExists(InstallFolder + '\SKIF.exe')) then
-    begin 
-      Log('SKIF.exe file check : detected'); 
+    begin
+      Log('SKIF.exe file check : detected');
       Log('Stopping Special K Injection Frontend (SKIF) and the injection service...');
       UninstallProgressForm.StatusLabel.Caption := 'Stopping Special K Injection Frontend (SKIF) and the injection service...';
       Exec(InstallFolder + '\SKIF.exe', 'Stop Quit', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
@@ -427,14 +430,14 @@ begin
 
     // If any component is still running, forcefully close them
     if (IsSKIForSvcRunning()) then
-    begin 
+    begin
       Log('Forcefully stopping Special K Injection Frontend (SKIF).');
       UninstallProgressForm.StatusLabel.Caption := 'Forcefully stopping Special K Injection Frontend (SKIF)...';
 
       ForceStopSKIFandSvc();
 
       Sleep(500);
-    end;    
+    end;
 
     UninstallProgressForm.StatusLabel.Caption := 'Determining if any Special K components requires elevation to remove...';
 
@@ -468,7 +471,7 @@ begin
         Log('Uninstalling the Special K Extended Hardware Monitoring Driver package.');
 
         ShellExec('RunAs', DriverUninstStr, '/VERYSILENT /SUPPRESSMSGBOXES', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
-        
+
         Sleep(500);
 
         if ResultCode <> 0 then
@@ -487,7 +490,7 @@ begin
       UninstallProgressForm.StatusLabel.Caption := 'Running cleanup commands in an elevated process...';
       Log('Calling an elevated Powershell session with the following commands : ' + PowerShellArgs );
       ShellExec('RunAs', ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), '-NoProfile -NonInteractive -WindowStyle Hidden -Command "' + PowerShellArgs + '"', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
-      
+
       Sleep(500);
 
       if ResultCode <> 0 then
@@ -559,11 +562,11 @@ Source: "{#SourceDir}\SpecialK64.pdb";               DestDir: "{app}";          
 
 ; Service hosts should only be replaced if they are different
 Source: "{#SourceDir}\Servlet\SKIFsvc64.exe";        DestDir: "{app}\Servlet";  Flags: ;                                         Check: IsWin64;
-Source: "{#SourceDir}\Servlet\SKIFsvc32.exe";        DestDir: "{app}\Servlet";  Flags: ;  
+Source: "{#SourceDir}\Servlet\SKIFsvc32.exe";        DestDir: "{app}\Servlet";  Flags: ;
 
 ; Remaining files should only be created if they do not exist already.
 ; NOTE: This line causes the files included above to be counted twice in DiskSpaceMBLabel
-Source: "{#SourceDir}\*";                            DestDir: "{app}";          Flags: onlyifdoesntexist recursesubdirs createallsubdirs;  Excludes: "SKIF.exe,SKIF32.exe,\SpecialK32.dll,\SpecialK32.pdb,\SpecialK64.dll,\SpecialK64.pdb,\XInput1_4.dll,\Servlet,\SpecialK32-AVX2.dll,\SpecialK64-AVX2.dll" 
+Source: "{#SourceDir}\*";                            DestDir: "{app}";          Flags: onlyifdoesntexist recursesubdirs createallsubdirs;  Excludes: "SKIF.exe,SKIF32.exe,\SpecialK32.dll,\SpecialK32.pdb,\SpecialK64.dll,\SpecialK64.pdb,\XInput1_4.dll,\Servlet,\SpecialK32-AVX2.dll,\SpecialK64-AVX2.dll"
 
 
 [Dirs]
@@ -572,7 +575,7 @@ Name: "{app}\Profiles"
 
 
 [Tasks]
-Name: desktopicon;   Description: "Create &desktop shortcut";    
+Name: desktopicon;   Description: "Create &desktop shortcut";
 Name: startmenu;     Description: "Create start menu shortcut";
 Name: contextmenu;   Description: "Add ""Start with SpecialK"" to context menu of .exe files.";   Flags: unchecked
 
@@ -645,8 +648,8 @@ Type: files;          Name: "{app}\SKIF.ini"
 Type: files;          Name: "{app}\SKIF.log"
 Type: files;          Name: "{app}\SKIF_launcher.log"
 Type: files;          Name: "{app}\patrons.txt"
-Type: files;          Name: "{app}\changes.txt" 
-Type: filesandordirs; Name: "{app}\Drivers\Dbghelp" 
+Type: files;          Name: "{app}\changes.txt"
+Type: filesandordirs; Name: "{app}\Drivers\Dbghelp"
 Type: filesandordirs; Name: "{app}\Drivers\WinRing0"
 Type: filesandordirs; Name: "{app}\Assets"
 Type: filesandordirs; Name: "{app}\Profiles"
@@ -658,6 +661,6 @@ Type: filesandordirs; Name: "{app}\Fonts"
 Type: filesandordirs; Name: "{app}\ReadMe"
 Type: filesandordirs; Name: "{app}\Servlet"
 Type: filesandordirs; Name: "{app}\Version"
-Type: dirifempty;     Name: "{app}"  
+Type: dirifempty;     Name: "{app}"
 Type: dirifempty;     Name: "{userdocs}\My Mods";  Check: TryExpandConstant('userdocs');
 
