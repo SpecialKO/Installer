@@ -8,6 +8,9 @@
 ; licensed under MIT
 ; https://github.com/SpecialKO/Installer/blob/main/LICENSE
 
+; Used to create a full offline installer, required for the Microsoft Store
+#define Offline
+; Cmd line args used: /CURRENTUSER /VERYSILENT /NORESTART /NOCANCEL /NOCLOSEAPPLICATIONS /RESTARTAPPLICATIONS /SP- /SUPPRESSMSGBOXES /RESTARTEXITCODE=10
 
 #define SpecialKName      "Special K"
 #define SpecialKPublisher "The Special K Group"
@@ -50,7 +53,6 @@ AppSupportURL                      = {#SpecialKHelpURL}
 AppUpdatesURL                      =
 AppCopyright                       = Copyleft 🄯 2015-2026
 VersionInfoVersion                 = {#SpecialKVersion}
-VersionInfoOriginalFileName        = SpecialK_{#SpecialKVersion}.exe
 VersionInfoCompany                 = {#SpecialKPublisher}
 DefaultDirName                     = {autopf}\Special K
 ;DefaultDirName                    = {userdocs}\My Mods\SpecialK
@@ -62,7 +64,13 @@ LicenseFile                        = {#AssetsDir}\LICENSE.txt
 PrivilegesRequired                 = lowest
 PrivilegesRequiredOverridesAllowed = commandline dialog
 OutputDir                          = {#OutputDir}
+#ifdef Offline
+VersionInfoOriginalFileName        = SpecialK_{#SpecialKVersion}_Offline.exe
+OutputBaseFilename                 = SpecialK_{#SpecialKVersion}_Offline
+#else
+VersionInfoOriginalFileName        = SpecialK_{#SpecialKVersion}.exe
 OutputBaseFilename                 = SpecialK_{#SpecialKVersion}
+#endif
 SetupIconFile                      = {#AssetsDir}\icon.ico
 Compression                        = lzma2/ultra64
 SolidCompression                   = yes
@@ -80,6 +88,7 @@ CloseApplications                  = yes
 DisableWelcomePage                 = no
 SetupLogging                       = yes
 SetupMutex                         = SKSetupMutex{#SetupSetting("AppId")}
+;SignTool                           = Certum
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -111,6 +120,11 @@ begin
   // 32-bit Visual C++ 2015-2022 Redistributable
   try
     Log('+ 32-bit Visual C++ 2015-2022 Redistributable');
+    
+#ifdef Offline ; Offline Installer
+    ExtractTemporaryFile('vcredist14_x86.exe');
+#endif
+    
     Dependency_ForceX86 := True;
     Dependency_AddVC2015To2022;
     Dependency_ForceX86 := False;
@@ -124,6 +138,11 @@ begin
   begin
     try
       Log('+ 64-bit Visual C++ 2015-2022 Redistributable');
+    
+#ifdef Offline ; Offline Installer
+      ExtractTemporaryFile('vcredist14_x64.exe');
+#endif
+
       Dependency_AddVC2015To2022;
     except
       Log('Catastrophic error in InitializeSetup() for 64-bit Visual C++ 2015-2022 Redistributable!');
@@ -226,7 +245,8 @@ begin
     Wizardform.BackButton.Visible := False;
     Wizardform.BackButton.Enabled := False;
 
-    // Determine if OneDrive is running and if so prompt user about closing it
+    // Determine if the user is trying to install Special K in a OneDrive folder...
+    // ... and detect if OneDrive is running and if so prompt user about closing it
     Log('Checking if OneDrive is used for the Documents folder...');
 
     if (Pos('OneDrive', ExpandConstant('{app}')) > 0) and (IsOneDriveRunning()) then
@@ -546,8 +566,13 @@ Root: HKCU; Subkey: "SOFTWARE\Classes\exefile\Shell\Start with SpecialK\command"
 ; This can result in a substantial delay if a number of other files are listed above the specified file in the [Files] section.
 
 ; Temporary files that are extracted as needed
-Source: "{#RedistDir}\Unregister-AppInitDLLs.ps1";   DestDir: {tmp};            Flags: dontcopy;
-Source: "{#AssetsDir}\{#MusicFileName}";             DestDir: {tmp};            Flags: dontcopy;
+Source: "{#RedistDir}\Unregister-AppInitDLLs.ps1";   DestDir: {tmp};            Flags: dontcopy noencryption;
+Source: "{#AssetsDir}\{#MusicFileName}";             DestDir: {tmp};            Flags: dontcopy noencryption;
+
+#ifdef Offline ; Offline Installer
+Source: "{#RedistDir}\vcredist14_x86.exe";           DestDir: {tmp};            Flags: dontcopy noencryption;
+Source: "{#RedistDir}\vcredist14_x64.exe";           DestDir: {tmp};            Flags: dontcopy noencryption;
+#endif
 
 ; Main Special K files should always be overwritten
 Source: "{#SourceDir}\SKIF.exe";                     DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64;
@@ -582,7 +607,7 @@ Name: contextmenu;   Description: "Add ""Start with SpecialK"" to context menu o
 [Icons]
 Name: "{autoprograms}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: startmenu
 Name:  "{autodesktop}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: desktopicon
-Name:     "{userdocs}\My Mods\Special K";  Filename: "{app}";                       Check: TryExpandConstant('userdocs') and not IsCFAEnabled;
+Name:   "{userdocs}\My Mods\Special K";    Filename: "{app}";                       Check: TryExpandConstant('userdocs') and not IsCFAEnabled;
 
 
 [Run]
@@ -591,6 +616,8 @@ Name:     "{userdocs}\My Mods\Special K";  Filename: "{app}";                   
 ; Normal install
 Filename: "{app}\{#SpecialKExeName}";               Description: "{cm:LaunchProgram,{#StringChange(SpecialKName, '&', '&&')}}"; \
   Flags: nowait postinstall runasoriginaluser skipifsilent;                                    Check: SwitchHasValue('LaunchSKIF', 'true', 'true');
+
+#ifndef Offline ; Only do this for a regular installer
 
 ; Silent install
 Filename: "{app}\{#SpecialKExeName}";               Description: "{cm:LaunchProgram,{#StringChange(SpecialKName, '&', '&&')}}"; \
@@ -607,6 +634,8 @@ Filename: "{app}\{#SpecialKExeName}";               Description: "{cm:LaunchProg
 ; Silent install + autostart + minimize
 Filename: "{app}\{#SpecialKExeName}";               Description: "{cm:LaunchProgram,{#StringChange(SpecialKName, '&', '&&')}}"; \
   Flags: nowait postinstall runasoriginaluser skipifnotsilent;   Parameters: "Start Minimize"; Check: SwitchHasValue('StartService', '1', '0') and SwitchHasValue('StartMinimized', '1', '0');
+  
+#endif
 
 Filename: "{#SpecialKHelpURL}";                     Description: "Open the wiki"; \
   Flags: shellexec nowait postinstall skipifsilent unchecked
