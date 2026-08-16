@@ -14,7 +14,6 @@
 #define SpecialKName          "Special K"
 #define SpecialKPublisher     "The Special K Group"
 #define SpecialKURL           "https://special-k.info/"
-#define SpecialKForum         "https://discourse.special-k.info/"
 #define SpecialKDiscord       "https://discord.special-k.info"
 #define SpecialKPatreon       "https://www.patreon.com/Kaldaien"
 #define RedistDir             "Redistributables"              ; Required dependencies and PowerShell helper scripts
@@ -475,9 +474,6 @@ Filename: "{#SpecialKHelpURL}";                     Description: "Open the wiki"
 ; Unchecked by default
 
 Filename: "{#SpecialKDiscord}";                     Description: "Join the Discord server"; \
-  Flags: shellexec nowait postinstall skipifsilent unchecked
-
-Filename: "{#SpecialKForum}";                       Description: "Visit the forum"; \
   Flags: shellexec nowait postinstall skipifsilent unchecked
 
 Filename: "{#SpecialKPatreon}";                     Description: "Support the project on Patreon"; \
