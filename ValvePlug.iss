@@ -13,7 +13,6 @@
 #define SpecialKPublisher "The Special K Group"
 #define SpecialKURL       "https://github.com/SpecialKO/ValvePlug"
 #define SpecialKHelpURL   "https://github.com/SpecialKO/ValvePlug"
-#define SpecialKForum     "https://discourse.special-k.info/"
 #define SpecialKDiscord   "https://discord.special-k.info"
 #define SpecialKPatreon   "https://www.patreon.com/Kaldaien"
 #define SpecialKExeName   "SKIF.exe"
@@ -140,14 +139,12 @@ begin
 
   Log('Required dependencies:');
 
-  // 32-bit Visual C++ 2015-2022 Redistributable
+  // 64-bit Visual C++ 2015-2022 Redistributable
   try
-    Log('+ 32-bit Visual C++ 2015-2022 Redistributable');
-    Dependency_ForceX86 := True;
+    Log('+ 64-bit Visual C++ 2015-2022 Redistributable');
     Dependency_AddVC2015To2022;
-    Dependency_ForceX86 := False;
   except
-    Log('Catastrophic error in InitializeSetup() for 32-bit Visual C++ 2015-2022 Redistributable!');
+    Log('Catastrophic error in InitializeSetup() for 64-bit Visual C++ 2015-2022 Redistributable!');
     // Surpresses exception when an issue prevents proper lookup
   end;
 
@@ -348,9 +345,6 @@ Filename: "{#SpecialKHelpURL}";                     Description: "Open the GitHu
   Flags: shellexec nowait postinstall skipifsilent unchecked
 
 Filename: "{#SpecialKDiscord}";                     Description: "Join the Discord server"; \
-   Flags: shellexec nowait postinstall skipifsilent unchecked
-
-Filename: "{#SpecialKForum}";                       Description: "Visit the forum"; \
    Flags: shellexec nowait postinstall skipifsilent unchecked
 
 Filename: "{#SpecialKPatreon}";                     Description: "Support the project on Patreon"; \
