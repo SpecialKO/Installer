@@ -1085,5 +1085,15 @@ begin
 end;
 
 
+// -----------
+// Check if Windows 8.1 or later
+// -----------
+// Bundled XInput1_4.dll does not support Windows 8 or 7.
+function IsWindows81OrLater: Boolean;
+begin
+  Result := (GetWindowsVersion >= $06030000);
+end;
+
+
 [Setup]
 ; Required as otherwise the file cannot be compiled

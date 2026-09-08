@@ -578,7 +578,7 @@ Source: "{#RedistDir}\vcredist14_x64.exe";           DestDir: {tmp};            
 Source: "{#SourceDir}\SKIF.exe";                     DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64;
 Source: "{#SourceDir}\SKIF32.exe";                   DestDir: "{app}";          Flags: ignoreversion;  DestName: "SKIF.exe";     Check: not IsWin64;
 Source: "{#SourceDir}\SKIV.exe";                     DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64;
-Source: "{#SourceDir}\XInput1_4.dll";                DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64 and IsWindows8OrLater;
+Source: "{#SourceDir}\XInput1_4.dll";                DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64 and IsWindows81OrLater;
 Source: "{#SourceDir}\SpecialK32.dll";               DestDir: "{app}";          Flags: ignoreversion;
 Source: "{#SourceDir}\SpecialK32.pdb";               DestDir: "{app}";          Flags: ignoreversion skipifsourcedoesntexist;
 Source: "{#SourceDir}\SpecialK64.dll";               DestDir: "{app}";          Flags: ignoreversion;                            Check: IsWin64;
