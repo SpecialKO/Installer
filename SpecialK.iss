@@ -9,7 +9,7 @@
 ; https://github.com/SpecialKO/Installer/blob/main/LICENSE
 
 ; Used to create a full offline installer, required for the Microsoft Store
-#define Offline
+; #define Offline
 ; Cmd line args used: /CURRENTUSER /VERYSILENT /NORESTART /NOCANCEL /NOCLOSEAPPLICATIONS /RESTARTAPPLICATIONS /SP- /SUPPRESSMSGBOXES /RESTARTEXITCODE=10
 
 #define SpecialKName      "Special K"
