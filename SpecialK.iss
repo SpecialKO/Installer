@@ -8,6 +8,9 @@
 ; licensed under MIT
 ; https://github.com/SpecialKO/Installer/blob/main/LICENSE
 
+; Used to indicate VC++ Redist dependencies should be installed
+; #define VCppRedist
+
 ; Used to create a full offline installer, required for the Microsoft Store
 ; #define Offline
 ; Cmd line args used: /CURRENTUSER /VERYSILENT /NORESTART /NOCANCEL /NOCLOSEAPPLICATIONS /RESTARTAPPLICATIONS /SP- /SUPPRESSMSGBOXES /RESTARTEXITCODE=10
@@ -117,6 +120,8 @@ begin
   //Dependency_AddDirectX;
   // Not required any longer following the removal of CEGUI
 
+#ifdef VCppRedist ; Do we require VC++ Redists to be installed?
+  
   // 32-bit Visual C++ 2015-2022 Redistributable
   try
     Log('+ 32-bit Visual C++ 2015-2022 Redistributable');
@@ -149,6 +154,8 @@ begin
       // Surpresses exception when an issue prevents proper lookup
     end;
   end;
+  
+#endif
 
   Result := True;
 end;
