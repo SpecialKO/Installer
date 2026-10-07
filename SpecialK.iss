@@ -22,12 +22,15 @@
 #define SpecialKDiscord   "https://discord.special-k.info"
 #define SpecialKPatreon   "https://www.patreon.com/Kaldaien"
 #define SpecialKExeName   "SKIF.exe"
+#define SKIVName          "Special K Image Viewer"
+#define SKIVExeName       "SKIV.exe"
 #define SourceDir         "Source"                        ; Keeps the files and folder structure of the install folder as intended post-install
 #define RedistDir         "Redistributables"              ; Required dependencies and PowerShell helper scripts
 #define OutputDir         "Builds"                        ; Output folder to put compiled builds of the installer
 #define AssetsDir         "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
 #define SpecialKVersion   GetStringFileInfo(SourceDir + '\SpecialK64.dll', "ProductVersion") ; ProductVersion
 #define SKIFVersion       GetStringFileInfo(SourceDir + '\SKIF.exe',       "ProductVersion")
+#define SKIVVersion       GetStringFileInfo(SourceDir + '\SKIV.exe',       "ProductVersion")
 #define MusicFileName     "techno_stargazev2.1loop.mp3"
 #define MusicCreditURL    "https://opengameart.org/content/stargazer"
 
@@ -206,6 +209,7 @@ begin
     Wizardform.ReadyMemo.Lines.Add('Components to install:');
     Wizardform.ReadyMemo.Lines.Add('      Special K                           v {#SpecialKVersion}');
     Wizardform.ReadyMemo.Lines.Add('      Special K Injection Frontend (SKIF) v {#SKIFVersion}');
+    Wizardform.ReadyMemo.Lines.Add('      Special K Image     Viewer   (SKIV) v {#SKIVVersion}');
     Wizardform.ReadyMemo.Lines.Add('');
     //Wizardform.ReadyMemo.Lines.Add('Destination location:');
     //Wizardform.ReadyMemo.Lines.Add(ExpandConstant('      {app}'));
@@ -607,12 +611,13 @@ Name: "{app}\Profiles"
 
 [Tasks]
 Name: desktopicon;   Description: "Create &desktop shortcut";
-Name: startmenu;     Description: "Create start menu shortcut";
+Name: startmenu;     Description: "Create start menu shortcuts";
 Name: contextmenu;   Description: "Add ""Start with SpecialK"" to context menu of .exe files.";   Flags: unchecked
 
 
 [Icons]
 Name: "{autoprograms}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: startmenu
+Name: "{autoprograms}\{#SKIVName}";        Filename: "{app}\{#SKIVExeName}";        Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: startmenu
 Name:  "{autodesktop}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: desktopicon
 Name:   "{userdocs}\My Mods\Special K";    Filename: "{app}";                       Check: TryExpandConstant('userdocs') and not IsCFAEnabled;
 
