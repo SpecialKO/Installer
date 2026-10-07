@@ -8,6 +8,8 @@
 ; licensed under MIT
 ; https://github.com/SpecialKO/Installer/blob/main/LICENSE
 
+; Used to indicate VC++ Redist dependencies should be installed
+; #define VCppRedist
 
 #define SpecialKName      "Special K Extended Hardware Monitoring Driver"
 #define SpecialKPublisher "The Special K Group"
@@ -95,6 +97,8 @@ begin
 
   Log('Required dependencies:');
 
+#ifdef VCppRedist ; Do we require VC++ Redists to be installed?
+
   // 32-bit Visual C++ 2015-2022 Redistributable
   try
     Log('+ 32-bit Visual C++ 2015-2022 Redistributable');
@@ -117,6 +121,8 @@ begin
       // Surpresses exception when an issue prevents proper lookup
     end;
   end;
+  
+#endif
 
   Result := True;
 end;
