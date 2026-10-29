@@ -566,7 +566,7 @@ Root: HKCU; Subkey: "SOFTWARE\Classes\exefile\Shell";                           
 Root: HKCU; Subkey: "SOFTWARE\Classes\exefile\Shell\Start with SpecialK";                                                                                          Flags: noerror        uninsdeletekey;                            Tasks: contextmenu;
 Root: HKCU; Subkey: "SOFTWARE\Classes\exefile\Shell\Start with SpecialK";           ValueName: "Icon"; ValueType: string; ValueData: "{app}\{#SpecialKExeName},0"; Flags: noerror        uninsdeletevalue;                          Tasks: contextmenu;
 Root: HKCU; Subkey: "SOFTWARE\Classes\exefile\Shell\Start with SpecialK\command";                                                                                  Flags: noerror        uninsdeletekey;                            Tasks: contextmenu;
-Root: HKCU; Subkey: "SOFTWARE\Classes\exefile\Shell\Start with SpecialK\command";   ValueName: "";     ValueType: string; ValueData: "SKIF ""%1""";                Flags: noerror        uninsdeletevalue createvalueifdoesntexist; Tasks: contextmenu;
+Root: HKCU; Subkey: "SOFTWARE\Classes\exefile\Shell\Start with SpecialK\command";   ValueName: "";     ValueType: string; ValueData: "SKIF ""%1"" %*";             Flags: noerror        uninsdeletevalue createvalueifdoesntexist; Tasks: contextmenu;
 
 
 [Files]
