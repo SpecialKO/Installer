@@ -31,6 +31,8 @@
 #define SpecialKVersion   GetStringFileInfo(SourceDir + '\SpecialK64.dll', "ProductVersion") ; ProductVersion
 #define SKIFVersion       GetStringFileInfo(SourceDir + '\SKIF.exe',       "ProductVersion")
 #define SKIVVersion       GetStringFileInfo(SourceDir + '\SKIV.exe',       "ProductVersion")
+#define SKIFAppUserModelID "SpecialK.Injection.Frontend"  ; Must match SKIF's codebase ! Set on shortcuts and used by Windows to label Windows notifications
+#define SKIVAppUserModelID "SpecialK.Image.Viewer"        ; Must match SKIV's codebase ! Set on shortcuts and used by Windows to label Windows notifications
 #define MusicFileName     "techno_stargazev2.1loop.mp3"
 #define MusicCreditURL    "https://opengameart.org/content/stargazer"
 
@@ -616,10 +618,10 @@ Name: contextmenu;   Description: "Add ""Start with SpecialK"" to context menu o
 
 
 [Icons]
-Name: "{autoprograms}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: startmenu
-Name: "{autoprograms}\{#SKIVName}";        Filename: "{app}\{#SKIVExeName}";        Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: startmenu
-Name:  "{autodesktop}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: desktopicon
-Name:   "{userdocs}\My Mods\Special K";    Filename: "{app}";                       Check: TryExpandConstant('userdocs') and not IsCFAEnabled;
+Name: "{autoprograms}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    AppUserModelID: "{#SKIFAppUserModelID}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: startmenu
+Name: "{autoprograms}\{#SKIVName}";        Filename: "{app}\{#SKIVExeName}";        AppUserModelID: "{#SKIVAppUserModelID}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: startmenu
+Name:  "{autodesktop}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";                                                Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: desktopicon
+Name:   "{userdocs}\My Mods\Special K";    Filename: "{app}";                                                                   Check: TryExpandConstant('userdocs') and not IsCFAEnabled;
 
 
 [Run]

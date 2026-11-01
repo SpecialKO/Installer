@@ -18,6 +18,7 @@
 #define OutputDir         "Builds_SKIV"                   ; Output folder to put compiled builds of the installer
 #define AssetsDir         "Assets"                        ; LICENSE.txt, icon.ico, WizardImageFile.bmp, and WizardSmallImageFile.bmp
 #define SKIVVersion       GetStringFileInfo(SourceDir + '\SKIV.exe',       "ProductVersion")
+#define SKIVAppUserModelID "SpecialK.Image.Viewer"        ; Must match SKIV's codebase ! Set on shortcuts and used by Windows to label Windows notifications
 
 #include "SpecialK_Shared.iss"
 
@@ -267,8 +268,8 @@ Name: startmenu;     Description: "Create start menu shortcut";
 
 
 [Icons]
-Name: "{autoprograms}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: startmenu
-Name:  "{autodesktop}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: desktopicon
+Name: "{autoprograms}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";    AppUserModelID: "{#SKIVAppUserModelID}";    Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: startmenu
+Name:  "{autodesktop}\{#SpecialKName}";    Filename: "{app}\{#SpecialKExeName}";                                                Check: SwitchHasValue('Shortcuts', 'true', 'true');    Tasks: desktopicon
 
 
 [Run]
