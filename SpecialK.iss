@@ -677,6 +677,9 @@ Filename: "rundll32.exe";   WorkingDir: "{app}";    Description: "Disable G-Sync
 
 
 [UninstallDelete]
+Type: files;          Name: "{autoprograms}\{#SpecialKName}.lnk"
+Type: files;          Name: "{autoprograms}\{#SKIVName}.lnk"
+Type: files;          Name: "{autodesktop}\{#SpecialKName}.lnk"
 Type: files;          Name: "{userprograms}\Startup\SKIM64.lnk"
 Type: files;          Name: "{userprograms}\Startup\SKIF.lnk"
 Type: files;          Name: "{userprograms}\Startup\SKIFsvc32.lnk"
@@ -694,6 +697,7 @@ Type: files;          Name: "{app}\SKIV.log"
 Type: files;          Name: "{app}\SKIV.log.bak"
 Type: files;          Name: "{app}\patrons.txt"
 Type: files;          Name: "{app}\changes.txt"
+Type: files;          Name: "{userdocs}\My Mods\Special K.lnk";  Check: TryExpandConstant('userdocs');
 Type: filesandordirs; Name: "{app}\Drivers\Dbghelp"
 Type: filesandordirs; Name: "{app}\Drivers\WinRing0"
 Type: filesandordirs; Name: "{app}\Assets"
